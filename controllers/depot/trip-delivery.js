@@ -170,79 +170,124 @@ exports.getTripDelivery = (req, res, next) => {
   const searchBy = query.searchBy || "_id";
   const dateItem = query.date;
   const userDepartment = req?.department;
+  const types_of_trips = query.types_of_trips;
   const show_all_departments = req?.show_all_departments;
   let newTrips = [];
 
-  const filter =
-    searchBy === "trip_date" || searchBy === "createdAt"
-      ? {
-          [searchBy]: {
-            $gte: `${dateItem}T00:00:00`,
-            $lte: `${dateItem}T23:59:59`,
-          },
-        }
-      : {};
+  let filter;
 
-  TripDelivery.find(filter)
-    .populate("user_id", {
-      employee_id: 1,
-      first_name: 2,
-      last_name: 3,
-      department: 4,
-    })
-    .populate({ path: "locations", options: { sort: { date: 1 } } })
-    .populate("vehicle_id", { plate_no: 1 })
-    .populate("diesels")
-    .sort({ createdAt: "desc" })
-    .then((trips) => {
-      if (show_all_departments) {
-        newTrips = trips;
-      } else {
-        newTrips = trips.filter((trip) => {
-          return trip?.user_id?.department.toString().includes(userDepartment);
-        });
+  if (types_of_trips === "early_trips") {
+    const startHour = 0;
+    const endHour = 4;
+    console.log('early trips');
+    filter = {
+      $expr: {
+        $and: [
+          { $gte: [{ $hour: '$trip_date' }, startHour] },
+          { $lt: [{ $hour: '$trip_date' }, endHour] }
+        ]
       }
+    };
+  } else if(types_of_trips === "regular_trips") {
+      const startHour = 8;
+      const endHour = 17;
+      console.log('regular_trips');
+      filter = {
+        $expr: {
+          $and: [
+            { $gte: [{ $hour: '$trip_date' }, startHour] },
+            { $lt: [{ $hour: '$trip_date' }, endHour] }
+          ]
+        }
+      };
+  } else if(types_of_trips === "overtime_trips") {
+    const startHour = 18;
+    const endHour = 24;
+    console.log('overtime_trips');
+    filter = {
+      $expr: {
+        $and: [
+          { $gte: [{ $hour: '$trip_date' }, startHour] },
+          { $lt: [{ $hour: '$trip_date' }, endHour] }
+        ]
+      }
+    };
+} else{
+    
+    filter =
+      searchBy === "trip_date" || searchBy === "createdAt"
+        ? {
+            [searchBy]: {
+              $gte: `${dateItem}T00:00:00`,
+              $lte: `${dateItem}T23:59:59`,
+            },
+          }
+        : {};
+  }
 
-      if (searchBy === "trip_date" || searchBy === "createdAt") {
-        return newTrips;
-      } else {
-        return newTrips.filter((trip) => {
-          const searchProps = searchBy.split(".");
-          let obj = trip;
+ 
+TripDelivery.find(filter)
+  .populate("user_id", {
+    employee_id: 1,
+    first_name: 2,
+    last_name: 3,
+    department: 4,
+  })
+  .populate({ path: "locations", options: { sort: { date: 1 } } })
+  .populate("vehicle_id", { plate_no: 1 })
+  .populate("diesels")
+  .sort({ createdAt: "desc" })
+  .then((trips) => {
+    let newTrips;
 
-          for (const prop of searchProps) {
-            obj = obj[prop];
+    if (show_all_departments) {
+      newTrips = trips;
+    } else {
+      newTrips = trips.filter((trip) => {
+        return trip?.user_id?.department.toString().includes(userDepartment);
+      });
+    }
 
-            if (Array.isArray(obj)) {
-              return obj.find((el) =>
-                el.toString().toLowerCase().includes(searchItem)
-              );
-            }
+    if (searchBy === "trip_date" || searchBy === "createdAt") {
+      return newTrips;
+    } else {
+      return newTrips.filter((trip) => {
+        const searchProps = searchBy.split(".");
+        let obj = trip;
 
-            if (!obj) return false;
+        for (const prop of searchProps) {
+          obj = obj[prop];
+
+          if (Array.isArray(obj)) {
+            return obj.find((el) =>
+              el.toString().toLowerCase().includes(searchItem)
+            );
           }
 
-          return obj.toString().toLowerCase().includes(searchItem);
-        });
-      }
-    })
-    .then((result) => {
-      res.status(200).json({
-        message: "Success get delivery trips",
-        data: result,
-        pagination: {
-          totalItems: result.length,
-          limit: parseInt(perPage),
-          currentPage: parseInt(currentPage),
-        },
+          if (!obj) return false;
+        }
+
+        return obj.toString().toLowerCase().includes(searchItem);
       });
-    })
-    .catch((err) => {
-      if (!err.statusCode) {
-        err.statusCode = 500;
-      }
-      next(err);
+    }
+  })
+  .then((result) => {
+    res.status(200).json({
+      message: "Success get delivery trips",
+      data: result,
+      pagination: {
+        totalItems: result.length,
+        limit: parseInt(perPage),
+        currentPage: parseInt(currentPage),
+      },
     });
+  })
+  .catch((err) => {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  });
 };
 
 exports.updateTripDelivery = (req, res, next) => {

@@ -7,6 +7,7 @@ const User = require("../models/user");
 require("dotenv").config();
 
 exports.deleteAllUsers = async (req, res, next) => {
+  
   if (req.role !== "admin") {
     const error = new Error("Please make sure you're an admin");
     error.statusCode = 403;
@@ -124,11 +125,11 @@ exports.updateUser = (req, res, next) => {
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        const error = new Error("Could not find user");
+        const error = new Error("Could not find wser");
         error.statusCode = 404;
         throw error;
       }
-
+      
       if (profile !== user.profile && user.profile && profile != undefined) {
         clearImage(user.profile);
       }

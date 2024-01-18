@@ -9,7 +9,12 @@ const isAuth = require("../middleware/is-auth");
 
 router.post(
   "/create-user",
-  [
+  [  body("employee_id").custom(async (value) => {
+        const user = await User.findOne({ employee_id: value });
+        if (user) {
+          return Promise.reject("Employee ID already exists");
+        }
+      }),
     body("username").custom(async (value) => {
       return await User.findOne({ username: value }).then((user) => {
         if (user) {
@@ -32,6 +37,16 @@ router.delete("/delete-user/:userId", isAuth, authController.deleteUser);
 router.put(
   "/update-user/:userId",
   [
+    body("employee_id").custom(async (value, { req }) => {
+      const existingUser = await User.findOne({
+        employee_id: value,
+        _id: { $ne: req.params.userId } // Exclude the current user's ID
+      });
+      
+      if (existingUser) {
+        return Promise.reject("Employee ID already exists");
+      }
+    }),
     body("username").custom(async (value) => {
       return await User.findOne({ username: value }).then((user) => {
         if (user?.length > 1) {
