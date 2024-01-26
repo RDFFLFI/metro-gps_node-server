@@ -9,7 +9,8 @@ const isAuth = require("../middleware/is-auth");
 
 router.post(
   "/create-user",
-  [  body("employee_id").custom(async (value) => {
+  [  
+    body("employee_id").custom(async (value) => {
         const user = await User.findOne({ employee_id: value });
         if (user) {
           return Promise.reject("Employee ID already exists");

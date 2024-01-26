@@ -125,7 +125,7 @@ exports.updateUser = (req, res, next) => {
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        const error = new Error("Could not find wser");
+        const error = new Error("Could not find user");
         error.statusCode = 404;
         throw error;
       }
