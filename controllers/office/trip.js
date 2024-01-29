@@ -292,13 +292,10 @@ exports.fetchAllTrips = async (req, res, next) => {
             },
           }
         : {};
+        
 
     const totalItems = await Trip.countDocuments(filter);
 
-    if (totalItems === 0 && filter) {
-      res.status(200).json({ message: "Data not found for the specified date range." });
-      return next();
-    }
 
     const all_trips = await Trip.find(filter)
       .populate({
@@ -344,6 +341,7 @@ exports.fetchAllTrips = async (req, res, next) => {
     });
 
     const result = {
+      message: "Success get SG Trips",
       data: filteredTrips,
       pagination:{
         totalItems: totalItems,

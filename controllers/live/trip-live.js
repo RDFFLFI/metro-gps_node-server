@@ -266,6 +266,8 @@ exports.getApkTripLive = (req, res, next) => {
     });
 };
 
+
+//old get trips live
 exports.getTripLive = (req, res, next) => {
   const query = req.query;
   const currentPage = query.page || 1;
@@ -359,4 +361,108 @@ exports.getTripLive = (req, res, next) => {
       }
       next(err);
     });
+};
+
+
+// new get trips live 
+exports.fetchTripLive = async (req, res, next) => {
+  const { page, limit } = req?.query;
+
+  try {
+    let pageNumber = parseInt(page) || 1;
+    let itemsPerPage = parseInt(limit) || 10;
+
+    // If page or limit is undefined, remove pagination
+    if (isNaN(pageNumber) || isNaN(itemsPerPage)) {
+      pageNumber = 1;
+      itemsPerPage = 0; // Set to 0 to retrieve all data
+    }
+
+    const skipValue = (pageNumber - 1) * itemsPerPage;
+    let searchItem = req.query.search || "";
+    const searchBy = req.query.searchBy || "_id";
+    const userDepartment = req?.department;
+    const show_all_departments = req?.show_all_departments;
+    const dateFrom = req.query.dateFrom;
+    const dateTo = req.query.dateTo;
+
+    let filter =
+      searchBy === "trip_date" || searchBy === "createdAt"
+        ? {
+            [searchBy]: {
+              $gte: `${dateFrom}T00:00:00`,
+              $lte: `${dateTo}T23:59:59`,
+            },
+          }
+        : {};
+
+    const all_trips = await TripLive.find(filter)
+      .populate({
+        path: "locations",
+        options: { sort: { date: 1 } },
+      })
+      .populate("diesels")
+      .populate("user_id", {
+        employee_id: 1,
+        first_name: 2,
+        last_name: 3,
+        department: 4,
+      })
+      .populate("vehicle_id", { plate_no: 1 })
+      .sort({ createdAt: "desc" })
+      .skip(skipValue)
+      .limit(itemsPerPage);
+
+    // Apply additional filtering based on searchBy and searchItem
+    const filteredTrips = all_trips.filter((trip) => {
+      searchItem = searchItem.toLowerCase();
+      const searchProps = searchBy.split(".");
+      let obj = trip;
+      for (const prop of searchProps) {
+        obj = obj[prop];
+        if (Array.isArray(obj)) {
+          if (prop === "companion") {
+            return obj.find((el) =>
+              el.first_name
+                .toString()
+                .toLowerCase()
+                .includes(searchItem)
+            );
+          }
+          return obj.find(
+            (el) =>
+              el && el.toString().toLowerCase().includes(searchItem)
+          );
+        }
+        if (!obj) return false;
+      }
+      return obj.toString().toLowerCase().includes(searchItem);
+    });
+
+    const totalItems = filteredTrips.length;
+
+    const result = {
+      message: "Success get live trips",
+      data: filteredTrips,
+      pagination:{
+        totalItems: totalItems,
+        limit: itemsPerPage,
+        currentPage: pageNumber,
+      },
+      previous_page:
+        pageNumber > 1 && filteredTrips?.length ? pageNumber - 1 : null,
+      next_page:
+        itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
+    };
+
+    console.log(itemsPerPage, totalItems, pageNumber);
+
+    res.status(200).json(result);
+    return next();
+  } catch (error) {
+    // Handle the error appropriately
+    console.error(error); 
+    res.status(500).json({ error: "Internal Server Error" });
+    return next(error);
+  }
 };

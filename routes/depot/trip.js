@@ -11,7 +11,15 @@ router.get(
   isAuth,
   tripHauilingController.getApkTripHauling
 );
+
+//old get hauling trips
 router.get("/trips-hauling", isAuth, tripHauilingController.getTripHauling);
+
+//new get hauling trips
+
+router.get("/fetch-trips-hauling", isAuth, tripHauilingController.fetchTripHauling);
+
+
 router.post(
   "/trip-hauling",
   isAuth,
@@ -24,7 +32,11 @@ router.put(
 );
 
 // Delivery
+// old get
 router.get("/trips-delivery", isAuth, tripDeliveryController.getTripDelivery);
+
+//new get 
+router.get("/fetch-trips-delivery", isAuth, tripDeliveryController.fetchTripDelivery);
 router.get(
   "/apk-trips-delivery",
   isAuth,

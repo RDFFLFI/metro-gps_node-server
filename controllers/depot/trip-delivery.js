@@ -162,6 +162,8 @@ exports.getApkTripDelivery = (req, res, next) => {
     });
 };
 
+
+
 exports.getTripDelivery = (req, res, next) => {
   const { query } = req;
   const currentPage = query.page || 1;
@@ -289,6 +291,147 @@ TripDelivery.find(filter)
     next(err);
   });
 };
+
+// new get delivery trips
+exports.fetchTripDelivery = async (req, res, next) => {
+  const { page, limit } = req?.query;
+
+  try {
+    let pageNumber = parseInt(page) || 1;
+    let itemsPerPage = parseInt(limit) || 10;
+
+    // If page or limit is undefined, remove pagination
+    if (isNaN(pageNumber) || isNaN(itemsPerPage)) {
+      pageNumber = 1;
+      itemsPerPage = 0; // Set to 0 to retrieve all data
+    }
+
+    const skipValue = (pageNumber - 1) * itemsPerPage;
+    let searchItem = req.query.search || "";
+    const searchBy = req.query.searchBy || "_id";
+    const userDepartment = req?.department;
+    const show_all_departments = req?.show_all_departments;
+    const dateFrom = req.query.dateFrom;
+    const dateTo = req.query.dateTo;
+    const types_of_trips = req.query.types_of_trips;
+
+    let filter;
+
+    if (types_of_trips === "early_trips") {
+      console.log('early trips');
+      filter = {
+        $expr: {
+          $and: [
+            { $gte: [{ $hour: '$trip_date' }, 22] },
+            { $lt: [{ $hour: '$trip_date' }, 23] }
+          ]
+        }
+      };
+    } else if (types_of_trips === "regular_trips") {
+      console.log('regular_trips');
+      filter = {
+        $expr: {
+          $and: [
+            { $gte: [{ $hour: '$trip_date' }, 0] },
+            { $lt: [{ $hour: '$trip_date' }, 22] }
+          ]
+        }
+      };
+    } else if (types_of_trips === "special_trips") {
+      console.log('overtime_trips');
+      filter = {
+        $expr: {
+          $and: [
+            { $gte: [{ $hour: '$trip_date' }, 0] },
+            { $lt: [{ $hour: '$trip_date' }, 23] }
+          ]
+        }
+      };
+    } else {
+      filter =
+      searchBy === "trip_date" || searchBy === "createdAt"
+      ? {
+          [searchBy]: {
+            $gte: `${dateFrom}T00:00:00`,
+            $lte: `${dateTo}T23:59:59`,
+          },
+        }
+      : {};
+    }
+    
+    const all_trips = await TripDelivery.find(filter)
+      .populate({
+        path: "locations",
+        options: { sort: { date: 1 } },
+      })
+      .populate("diesels")
+      .populate("user_id", {
+        employee_id: 1,
+        first_name: 2,
+        last_name: 3,
+        department: 4,
+      })
+      .populate("vehicle_id", { plate_no: 1 })
+      .sort({ createdAt: "desc" })
+      .skip(skipValue)
+      .limit(itemsPerPage);
+
+    // Apply additional filtering based on searchBy and searchItem
+    const filteredTrips = all_trips.filter((trip) => {
+      searchItem = searchItem.toLowerCase();
+      const searchProps = searchBy.split(".");
+      let obj = trip;
+      for (const prop of searchProps) {
+        obj = obj[prop];
+        if (Array.isArray(obj)) {
+          if (prop === "companion") {
+            return obj.find((el) =>
+              el.first_name
+                .toString()
+                .toLowerCase()
+                .includes(searchItem)
+            );
+          }
+          return obj.find(
+            (el) =>
+              el && el.toString().toLowerCase().includes(searchItem)
+          );
+        }
+        if (!obj) return false;
+      }
+      return obj.toString().toLowerCase().includes(searchItem);
+    });
+
+
+    const totalItems = filteredTrips.length;
+
+    const result = {
+      message: "Success get delivery trips",
+      data: filteredTrips,
+      pagination:{
+        totalItems: totalItems,
+        limit: itemsPerPage,
+        currentPage: pageNumber,
+      },
+      previous_page:
+        pageNumber > 1 && filteredTrips?.length ? pageNumber - 1 : null,
+      next_page:
+        itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
+    };
+
+    console.log(itemsPerPage, totalItems, pageNumber);
+
+    res.status(200).json(result);
+    return next();
+  } catch (error) {
+    // Handle the error appropriately
+    console.error(error); 
+    res.status(500).json({ error: "Internal Server Error" });
+    return next(error);
+  }
+};
+
+
 
 exports.updateTripDelivery = (req, res, next) => {
   const tripId = req.params.tripId;
