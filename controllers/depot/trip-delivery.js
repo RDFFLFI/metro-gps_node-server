@@ -315,7 +315,7 @@ exports.fetchTripDelivery = async (req, res, next) => {
     const dateTo = req.query.dateTo;
     const types_of_trips = req.query.types_of_trips;
 
-    let filter;
+    let filter, totalItems;
 
     if (types_of_trips === "early_trips") {
       console.log('early trips');
@@ -358,6 +358,15 @@ exports.fetchTripDelivery = async (req, res, next) => {
         }
       : {};
     }
+
+    if (searchBy === "trip_date") {
+      sort = { trip_date: "asc" };
+    }
+    else if (searchBy === "createdAt") {
+      sort = { createdAt: "asc" };
+    }else{
+      sort = { createdAt: "desc" };
+    }
     
     const all_trips = await TripDelivery.find(filter)
       .populate({
@@ -372,7 +381,7 @@ exports.fetchTripDelivery = async (req, res, next) => {
         department: 4,
       })
       .populate("vehicle_id", { plate_no: 1 })
-      .sort({ createdAt: "desc" })
+      .sort(sort)
       .skip(skipValue)
       .limit(itemsPerPage);
 
@@ -402,8 +411,12 @@ exports.fetchTripDelivery = async (req, res, next) => {
       return obj.toString().toLowerCase().includes(searchItem);
     });
 
+    if (searchItem != null && searchItem !== "") {
+      totalItems = filteredTrips.length;
+    } else {
+      totalItems = await TripDelivery.countDocuments(filter);
+    }
 
-    const totalItems = filteredTrips.length;
 
     const result = {
       message: "Success get delivery trips",
@@ -419,19 +432,13 @@ exports.fetchTripDelivery = async (req, res, next) => {
         itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
     };
 
-    console.log(itemsPerPage, totalItems, pageNumber);
-
     res.status(200).json(result);
     return next();
   } catch (error) {
-    // Handle the error appropriately
-    console.error(error); 
     res.status(500).json({ error: "Internal Server Error" });
     return next(error);
   }
 };
-
-
 
 exports.updateTripDelivery = (req, res, next) => {
   const tripId = req.params.tripId;

@@ -291,6 +291,8 @@ exports.fetchTripHauling = async (req, res, next) => {
     const show_all_departments = req?.show_all_departments;
     const dateFrom = req.query.dateFrom;
     const dateTo = req.query.dateTo;
+    
+    let totalItems;
 
     let filter =
       searchBy === "trip_date" || searchBy === "createdAt"
@@ -302,9 +304,15 @@ exports.fetchTripHauling = async (req, res, next) => {
           }
         : {};
         
+    if (searchBy === "trip_date") {
+      sort = { trip_date: "asc" };
+    }
+    else if (searchBy === "createdAt") {
+      sort = { createdAt: "asc" };
+    }else{
+      sort = { createdAt: "desc" };
+    }
 
-    const totalItems = await TripHauling.countDocuments(filter);
-    
     const all_trips = await TripHauling.find(filter)
       .populate({
         path: "locations",
@@ -318,7 +326,7 @@ exports.fetchTripHauling = async (req, res, next) => {
         department: 4,
       })
       .populate("vehicle_id", { plate_no: 1 })
-      .sort({ createdAt: "desc" })
+      .sort(sort)
       .skip(skipValue)
       .limit(itemsPerPage);
 
@@ -348,6 +356,14 @@ exports.fetchTripHauling = async (req, res, next) => {
       return obj.toString().toLowerCase().includes(searchItem);
     });
 
+
+    if (searchItem != null && searchItem !== "") {
+      totalItems = filteredTrips.length;
+    } else {
+      totalItems = await TripHauling.countDocuments(filter);
+    }
+
+
     const result = {
       message: "Success get hauling trips",
       data: filteredTrips,
@@ -362,13 +378,10 @@ exports.fetchTripHauling = async (req, res, next) => {
         itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
     };
 
-    console.log(itemsPerPage, totalItems, pageNumber);
-
     res.status(200).json(result);
     return next();
   } catch (error) {
     // Handle the error appropriately
-    console.error(error); 
     res.status(500).json({ error: "Internal Server Error" });
     return next(error);
   }

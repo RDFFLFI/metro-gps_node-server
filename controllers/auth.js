@@ -419,6 +419,7 @@ exports.login = (req, res, next) => {
         process.env.SECRET_KEY
         // { expiresIn: "12h" }
       );
+
       res.status(200).json({ token: token });
     })
     .catch((err) => {

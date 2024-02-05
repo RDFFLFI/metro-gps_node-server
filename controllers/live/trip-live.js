@@ -371,6 +371,8 @@ exports.fetchTripLive = async (req, res, next) => {
   try {
     let pageNumber = parseInt(page) || 1;
     let itemsPerPage = parseInt(limit) || 10;
+    let totalItems;
+
 
     // If page or limit is undefined, remove pagination
     if (isNaN(pageNumber) || isNaN(itemsPerPage)) {
@@ -396,6 +398,15 @@ exports.fetchTripLive = async (req, res, next) => {
           }
         : {};
 
+    if (searchBy === "trip_date") {
+      sort = { trip_date: "asc" };
+    }
+    else if (searchBy === "createdAt") {
+      sort = { createdAt: "asc" };
+    }else{
+      sort = { createdAt: "desc" };
+    }
+
     const all_trips = await TripLive.find(filter)
       .populate({
         path: "locations",
@@ -409,7 +420,7 @@ exports.fetchTripLive = async (req, res, next) => {
         department: 4,
       })
       .populate("vehicle_id", { plate_no: 1 })
-      .sort({ createdAt: "desc" })
+      .sort(sort)
       .skip(skipValue)
       .limit(itemsPerPage);
 
@@ -439,7 +450,12 @@ exports.fetchTripLive = async (req, res, next) => {
       return obj.toString().toLowerCase().includes(searchItem);
     });
 
-    const totalItems = filteredTrips.length;
+      if (searchItem != null && searchItem !== "") {
+        totalItems = filteredTrips.length;
+      } else {
+        totalItems = await TripLive.countDocuments(filter);
+      }
+
 
     const result = {
       message: "Success get live trips",
@@ -454,8 +470,6 @@ exports.fetchTripLive = async (req, res, next) => {
       next_page:
         itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
     };
-
-    console.log(itemsPerPage, totalItems, pageNumber);
 
     res.status(200).json(result);
     return next();

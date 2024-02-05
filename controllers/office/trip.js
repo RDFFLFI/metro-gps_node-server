@@ -157,7 +157,7 @@ exports.getApkTrips = (req, res, next) => {
  
 // OLD GET TRIPS 
 exports.getTrips = (req, res, next) => {
-  // office/trips?page=
+  
   const currentPage = req.query.page || 1;
   const perPage = req.query.limit || 25;
   let searchItem = req.query.search || "";
@@ -167,7 +167,7 @@ exports.getTrips = (req, res, next) => {
   const show_all_departments = req?.show_all_departments;
 
   const filter =
-    searchBy === "trip_date" || searchBy === "createdAt" 
+    searchBy === "trip_date" || searchBy === "createdAt"
       ? {
           [searchBy]: {
             $gte: `${dateItem}T00:00:00`,
@@ -260,6 +260,7 @@ exports.getTrips = (req, res, next) => {
     });
 };
 
+
 // New get trips
 exports.fetchAllTrips = async (req, res, next) => {
   const { page, limit } = req?.query;
@@ -282,7 +283,9 @@ exports.fetchAllTrips = async (req, res, next) => {
     const show_all_departments = req?.show_all_departments;
     const dateFrom = req.query.dateFrom;
     const dateTo = req.query.dateTo;
-
+    
+    let totalItems;
+    
     let filter =
       searchBy === "trip_date" || searchBy === "createdAt"
         ? {
@@ -292,11 +295,18 @@ exports.fetchAllTrips = async (req, res, next) => {
             },
           }
         : {};
-        
 
-    const totalItems = await Trip.countDocuments(filter);
+    let sort;
 
-
+    if (searchBy === "trip_date") {
+      sort = { trip_date: "asc" };
+    }
+    else if (searchBy === "createdAt") {
+      sort = { createdAt: "asc" };
+    }else{
+      sort = { createdAt: "desc" };
+    }
+    
     const all_trips = await Trip.find(filter)
       .populate({
         path: "locations",
@@ -310,9 +320,9 @@ exports.fetchAllTrips = async (req, res, next) => {
         department: 4,
       })
       .populate("vehicle_id", { plate_no: 1 })
-      .sort({ createdAt: "desc" })
+      .sort(sort) 
       .skip(skipValue)
-      .limit(itemsPerPage);
+      .limit(itemsPerPage);        
 
     // Apply additional filtering based on searchBy and searchItem
     const filteredTrips = all_trips.filter((trip) => {
@@ -340,6 +350,12 @@ exports.fetchAllTrips = async (req, res, next) => {
       return obj.toString().toLowerCase().includes(searchItem);
     });
 
+    if (searchItem != null && searchItem !== "") {
+      totalItems = filteredTrips.length;
+    } else {
+      totalItems = await Trip.countDocuments(filter);
+    }
+
     const result = {
       message: "Success get SG Trips",
       data: filteredTrips,
@@ -353,14 +369,10 @@ exports.fetchAllTrips = async (req, res, next) => {
       next_page:
         itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
     };
-
-    console.log(itemsPerPage, totalItems, pageNumber);
-
     res.status(200).json(result);
     return next();
   } catch (error) {
     // Handle the error appropriately
-    console.error(error); 
     res.status(500).json({ error: "Internal Server Error" });
     return next(error);
   }
