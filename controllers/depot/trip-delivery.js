@@ -313,12 +313,10 @@ exports.fetchTripDelivery = async (req, res, next) => {
     const show_all_departments = req?.show_all_departments;
     const dateFrom = req.query.dateFrom;
     const dateTo = req.query.dateTo;
-    const types_of_trips = req.query.types_of_trips;
+    const typesOfTrip = req.query.typesOfTrip;
 
     let filter, totalItems;
-
-    if (types_of_trips === "early_trips") {
-      console.log('early trips');
+    if (typesOfTrip === "early_trips") {
       filter = {
         $expr: {
           $and: [
@@ -327,17 +325,16 @@ exports.fetchTripDelivery = async (req, res, next) => {
           ]
         }
       };
-    } else if (types_of_trips === "regular_trips") {
-      console.log('regular_trips');
+    } else if (typesOfTrip === "regular_trips") {
       filter = {
         $expr: {
           $and: [
             { $gte: [{ $hour: '$trip_date' }, 0] },
-            { $lt: [{ $hour: '$trip_date' }, 22] }
+            { $lt: [{ $hour: '$trip_date' }, 21] }
           ]
         }
       };
-    } else if (types_of_trips === "special_trips") {
+    } else if (typesOfTrip === "special_trips") {
       console.log('overtime_trips');
       filter = {
         $expr: {
@@ -359,11 +356,8 @@ exports.fetchTripDelivery = async (req, res, next) => {
       : {};
     }
 
-    if (searchBy === "trip_date") {
+    if (searchBy === "trip_date" || typesOfTrip === "early_trips" || typesOfTrip === "regular_trips" || typesOfTrip === "special_trips" || searchBy === "createdAt") {
       sort = { trip_date: "asc" };
-    }
-    else if (searchBy === "createdAt") {
-      sort = { createdAt: "asc" };
     }else{
       sort = { createdAt: "desc" };
     }
