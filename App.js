@@ -22,6 +22,8 @@ const liveTripRoutes = require("./routes/live/trip");
 
 const dashboardRoutes = require("./routes/dashboard");
 
+const ApkManagement = require("./routes/apk_management");
+
 const app = express();
 
 // Images Upload
@@ -40,6 +42,25 @@ const fileFilter = (req, file, cb) => {
     file.mimetype === "image/jpg" ||
     file.mimetype === "image/jpeg"
   ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+
+// Apk Upload
+const apkstorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "apk");
+  },
+  filename: (req, file, cb) => {
+    cb(null, uuidv4());
+  },
+});
+
+const apkfileFilter = (req, file, cb) => {
+  if (file.mimetype === "application/vnd.android.package-archive") {
     cb(null, true);
   } else {
     cb(null, false);
@@ -67,6 +88,8 @@ app.use(
 app.use(bodyParse.json({ limit: "100mb" }));
 app.use(bodyParse.urlencoded({ limit: "100mb", extended: true }));
 
+const uploadApk = multer({ storage: apkstorage, fileFilter: apkfileFilter }).single("apk");
+
 const uploadImage = multer({ storage: storage, fileFilter: fileFilter }).single(
   "image"
 );
@@ -75,6 +98,7 @@ const uploadOdometer = multer({
   storage: storage,
   fileFilter: fileFilter,
 }).array("images");
+
 
 app.use("/images", express.static(path.join(__dirname, "images")));
 
@@ -100,6 +124,9 @@ app.use("/live", uploadOdometer, liveTripRoutes);
 
 // Dashboard
 app.use("/dashboard", dashboardRoutes);
+
+// APK Routes
+app.use("/apk", uploadApk, ApkManagement);
 
 // Error Cb
 app.use((error, req, res, next) => {
