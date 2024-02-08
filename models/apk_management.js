@@ -14,7 +14,7 @@ const ApkManagement = new Schema(
     },
     apk_file_path: {
       type: String,
-      required: true,
+      // required: true,
     }
   },
   { timestamps: true }

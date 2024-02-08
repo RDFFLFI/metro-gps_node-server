@@ -63,7 +63,7 @@ const apkfileFilter = (req, file, cb) => {
   if (file.mimetype === "application/vnd.android.package-archive") {
     cb(null, true);
   } else {
-    cb(null, false);
+    cb(new Error("Invalid file type. Only APK files are allowed."), false);
   }
 };
 
@@ -88,7 +88,7 @@ app.use(
 app.use(bodyParse.json({ limit: "100mb" }));
 app.use(bodyParse.urlencoded({ limit: "100mb", extended: true }));
 
-const uploadApk = multer({ storage: apkstorage, fileFilter: apkfileFilter }).single("apk");
+const uploadApk = multer({ storage: apkstorage, fileFilter: apkfileFilter,  limits: { fileSize: 40 * 1024 * 1024 } }).single("apk");
 
 const uploadImage = multer({ storage: storage, fileFilter: fileFilter }).single(
   "image"

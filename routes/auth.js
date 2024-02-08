@@ -34,6 +34,7 @@ router.post(
 
 router.post("/login", authController.login);
 router.get("/users", isAuth, authController.getUsers);
+router.get("/users-number", isAuth, authController.getNumbers);
 router.delete("/delete-user/:userId", isAuth, authController.deleteUser);
 router.put(
   "/update-user/:userId",

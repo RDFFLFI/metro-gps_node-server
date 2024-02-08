@@ -59,6 +59,17 @@ const userSchema = new Schema(
     company: {
       type: Object,
     },
+    mobile_number: {
+      type: String,
+      validate: {
+        validator: function (value) {
+          // Use a regular expression to check if the mobile number starts with +63 and has exactly 13 characters
+          return /^(\+63)[0-9]{10}$/.test(value);
+        },
+        message: props =>
+          `${props.value} is not a valid mobile number. It should start with +63 and have 12 characters.`,
+      },
+    },
     permission: {
       type: JSON,
     },

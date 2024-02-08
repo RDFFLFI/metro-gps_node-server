@@ -99,7 +99,7 @@ exports.updateUser = (req, res, next) => {
 
   if (req.file) {
     newImageURl = req.file.path.replace("\\", "/");
-  }
+  } 
 
   const employee_id = req.body.employee_id || null;
   const first_name = req.body.first_name || null;
@@ -117,6 +117,7 @@ exports.updateUser = (req, res, next) => {
   const division = req.body.division;
   const division_category = req.body.division_category;
   const company = req.body.company;
+  const mobile_number = req.body.mobile_number;
   const permission =
     (req.body?.permission && JSON.parse(req.body.permission)) || null;
   const show_all_departments = req.body.show_all_departments;
@@ -129,6 +130,10 @@ exports.updateUser = (req, res, next) => {
         error.statusCode = 404;
         throw error;
       }
+      
+      // if (mobile_number !== user.profile && user.profile && profile != undefined) {
+      //   clearImage(user.profile);
+      // }
       
       if (profile !== user.profile && user.profile && profile != undefined) {
         clearImage(user.profile);
@@ -156,6 +161,7 @@ exports.updateUser = (req, res, next) => {
             user.division_category =
               division_category || user.division_category;
             user.company = company || user.company;
+            user.mobile_number = mobile_number || user.company;
             user.permission = permission || user.permission;
             user.show_all_departments =
               show_all_departments || user.show_all_departments;
@@ -333,6 +339,7 @@ exports.createUser = (req, res, next) => {
   const division = req.body.division;
   const division_category = req.body.division_category;
   const company = req.body.company;
+  const mobile_number = req.body.mobile_number;
   const permission =
     (req.body?.permission && JSON.parse(req.body.permission)) || null;
   const show_all_departments = req.body.show_all_departments;
@@ -357,6 +364,7 @@ exports.createUser = (req, res, next) => {
         division: division,
         division_category: division_category,
         company: company,
+        mobile_number: mobile_number,
         permission: permission,
         show_all_departments: show_all_departments,
       });
@@ -433,4 +441,31 @@ exports.login = (req, res, next) => {
 const clearImage = (filePath) => {
   filePath = path.join(__dirname, "..", filePath);
   fs.unlink(filePath, (err) => console.log(err));
+};
+
+
+exports.getNumbers = (req, res, next) => {
+  if (req.role !== "admin") {
+    const error = new Error("Please make sure you're an admin");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  User.find({ mobile_number: { $ne: null, $ne: "" } }, 'mobile_number') 
+  .then((users) => {
+    const mobileNumbers = users
+      .map(user => user.mobile_number)
+      .filter(mobileNumber => mobileNumber); // Exclude null or empty values
+    
+    res.status(200).json({
+      message: "Fetch non-null mobile numbers successfully",
+      mobile_number: mobileNumbers,
+    });
+  })
+  .catch((err) => {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  });
 };
