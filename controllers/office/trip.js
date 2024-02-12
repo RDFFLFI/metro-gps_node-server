@@ -319,7 +319,7 @@ exports.fetchAllTrips = async (req, res, next) => {
         last_name: 3,
         department: 4,
       })
-      .populate("vehicle_id", { plate_no: 1 })
+      .populate("vehicle_id", { plate_no: 1 , km_per_liter: 2})
       .sort(sort) 
       .skip(skipValue)
       .limit(itemsPerPage);        

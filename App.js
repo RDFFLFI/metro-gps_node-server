@@ -49,22 +49,24 @@ const fileFilter = (req, file, cb) => {
 };
 
 
-// Apk Upload
-const apkstorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "apk");
-  },
-  filename: (req, file, cb) => {
-    cb(null, uuidv4());
-  },
-});
+  // Apk Upload
+  const apkstorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "apk");
+    },
+    filename: (req, file, cb) => {
+      const versionName = req.body.version_name;
+      const fileName = `${versionName}.apk`;
+      cb(null, fileName);
+    },
+  });
 
-const apkfileFilter = (req, file, cb) => {
-  if (file.mimetype === "application/vnd.android.package-archive") {
-    cb(null, true);
-  } else {
-    cb(new Error("Invalid file type. Only APK files are allowed."), false);
-  }
+  const apkfileFilter = (req, file, cb) => {
+    if (file.mimetype === "application/vnd.android.package-archive") {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only APK files are allowed."), false);
+    }
 };
 
 const accessLogStream = fs.createWriteStream(
