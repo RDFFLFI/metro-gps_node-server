@@ -123,6 +123,12 @@ exports.updateUser = (req, res, next) => {
   const show_all_departments = req.body.show_all_departments;
   // image validation here
 
+  const mobile_number_regex = /^\+63[0-9]{10}$/;
+
+    if(!mobile_number_regex.test(mobile_number)){
+      return res.status(422).json({ error: "It should start with +63 and have 12 characters." });
+    }
+
   User.findById(userId)
     .then((user) => {
       if (!user) {
@@ -344,6 +350,12 @@ exports.createUser = (req, res, next) => {
     (req.body?.permission && JSON.parse(req.body.permission)) || null;
   const show_all_departments = req.body.show_all_departments;
 
+  const mobile_number_regex = /^\+63[0-9]{10}$/;
+
+  if(!mobile_number_regex.test(mobile_number)){
+    return res.status(422).json({ error: "It should start with +63 and have 12 characters." });
+  }
+
   bcrypt
     .hash(password, 12)
     .then((hashedPw) => {
@@ -455,8 +467,9 @@ exports.getNumbers = (req, res, next) => {
   .then((users) => {
     const mobileNumbers = users
       .map(user => user.mobile_number)
-      .filter(mobileNumber => mobileNumber); // Exclude null or empty values
-    
+      .filter(mobileNumber => mobileNumber)
+      .filter((value, index, self) => self.indexOf(value) === index); // Remove duplicates
+
     res.status(200).json({
       message: "Fetch non-null mobile numbers successfully",
       mobile_number: mobileNumbers,
