@@ -117,17 +117,20 @@ exports.updateUser = (req, res, next) => {
   const division = req.body.division;
   const division_category = req.body.division_category;
   const company = req.body.company;
-  const mobile_number = req.body.mobile_number;
+  const mobile_number = req.body.mobile_number || null;
   const permission =
     (req.body?.permission && JSON.parse(req.body.permission)) || null;
   const show_all_departments = req.body.show_all_departments;
   // image validation here
 
   const mobile_number_regex = /^\+63[0-9]{10}$/;
-
+  
+  // added this to validate null and +63 
+  if(mobile_number != null && mobile_number !== "+63" ){
     if(!mobile_number_regex.test(mobile_number)){
       return res.status(422).json({ error: "It should start with +63 and have 12 characters." });
     }
+  } 
 
   User.findById(userId)
     .then((user) => {
@@ -167,7 +170,7 @@ exports.updateUser = (req, res, next) => {
             user.division_category =
               division_category || user.division_category;
             user.company = company || user.company;
-            user.mobile_number = mobile_number || user.company;
+            user.mobile_number = mobile_number || user.mobile_number;
             user.permission = permission || user.permission;
             user.show_all_departments =
               show_all_departments || user.show_all_departments;
@@ -352,10 +355,12 @@ exports.createUser = (req, res, next) => {
 
   const mobile_number_regex = /^\+63[0-9]{10}$/;
 
-  if(!mobile_number_regex.test(mobile_number)){
-    return res.status(422).json({ error: "It should start with +63 and have 12 characters." });
-  }
-
+  if(mobile_number != null && mobile_number !== "+63" ){
+    if(!mobile_number_regex.test(mobile_number)){
+      return res.status(422).json({ error: "It should start with +63 and have 12 characters." });
+    }
+  } 
+  
   bcrypt
     .hash(password, 12)
     .then((hashedPw) => {

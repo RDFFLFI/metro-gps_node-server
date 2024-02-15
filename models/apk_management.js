@@ -9,7 +9,7 @@ const ApkManagement = new Schema(
       required: true,
     },
     release_date: {
-      type: String,
+      type: Date,
       required: true,
     },
     apk_file_path: {
