@@ -320,27 +320,37 @@ exports.fetchTripDelivery = async (req, res, next) => {
       filter = {
         $expr: {
           $and: [
-            { $gte: [{ $hour: '$trip_date' }, 22] },
-            { $lt: [{ $hour: '$trip_date' }, 23] }
+            { $gte: [{ $hour: '$trip_date' }, 14] }, // 10 pm
+            { $lt: [{ $hour: '$trip_date' }, 16] }  // 12 am
           ]
         }
       };
     } else if (typesOfTrip === "regular_trips") {
       filter = {
         $expr: {
-          $and: [
-            { $gte: [{ $hour: '$trip_date' }, 0] },
-            { $lt: [{ $hour: '$trip_date' }, 21] }
+          $or: [
+            {
+              $and: [
+                { $gte: [{ $hour: '$trip_date' }, 17] }, // 1am
+                { $lt: [{ $hour: '$trip_date' }, 24] } // 8am
+              ]
+            },
+            {
+              $and: [
+                { $gte: [{ $hour: '$trip_date' }, 0] }, // 8am
+                { $lt: [{ $hour: '$trip_date' }, 14] } // 10pm
+              ]
+            }
           ]
         }
       };
-    } else if (typesOfTrip === "special_trips") {
-      console.log('overtime_trips');
+    }
+     else if (typesOfTrip === "special_trips") {
       filter = {
         $expr: {
           $and: [
             { $gte: [{ $hour: '$trip_date' }, 0] },
-            { $lt: [{ $hour: '$trip_date' }, 23] }
+            { $lte: [{ $hour: '$trip_date' }, 24] }
           ]
         }
       };
