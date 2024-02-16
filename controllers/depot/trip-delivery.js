@@ -316,57 +316,103 @@ exports.fetchTripDelivery = async (req, res, next) => {
     const typesOfTrip = req.query.typesOfTrip;
 
     let filter, totalItems;
-    if (typesOfTrip === "early_trips") {
-      filter = {
-        $expr: {
-          $and: [
-            { $gte: [{ $hour: '$trip_date' }, 14] }, // 10 pm
-            { $lt: [{ $hour: '$trip_date' }, 16] }  // 12 am
-          ]
-        }
-      };
-    } else if (typesOfTrip === "regular_trips") {
-      filter = {
-        $expr: {
-          $or: [
-            {
-              $and: [
-                { $gte: [{ $hour: '$trip_date' }, 17] }, // 1am
-                { $lt: [{ $hour: '$trip_date' }, 24] } // 8am
-              ]
-            },
-            {
-              $and: [
-                { $gte: [{ $hour: '$trip_date' }, 0] }, // 8am
-                { $lt: [{ $hour: '$trip_date' }, 14] } // 10pm
-              ]
-            }
-          ]
-        }
-      };
-    }
-     else if (typesOfTrip === "special_trips") {
-      filter = {
-        $expr: {
-          $and: [
-            { $gte: [{ $hour: '$trip_date' }, 0] },
-            { $lte: [{ $hour: '$trip_date' }, 24] }
-          ]
-        }
-      };
-    } else {
-      filter =
-      searchBy === "trip_date" || searchBy === "createdAt"
-      ? {
-          [searchBy]: {
-            $gte: `${dateFrom}T00:00:00`,
-            $lte: `${dateTo}T23:59:59`,
-          },
-        }
-      : {};
-    }
 
-    if (searchBy === "trip_date" || typesOfTrip === "early_trips" || typesOfTrip === "regular_trips" || typesOfTrip === "special_trips" || searchBy === "createdAt") {
+    //new update (2024-02-16)
+    //added a filter on trip_date and sync date
+    if (typesOfTrip === "early_trips" && (searchBy === "trip_date" || searchBy === "createdAt")) {
+      const dateFilter = {
+        [searchBy]: {
+            $gte: new Date(`${dateFrom}T00:00:00`),
+            $lte: new Date(`${dateTo}T23:59:59`)
+        }
+        
+    };
+      const timeFilter = {
+          $expr: {
+              $and: [
+                  { $gte: [{ $hour: '$trip_date' }, 14] }, // 2 pm
+                  { $lt: [{ $hour: '$trip_date' }, 16] }   // 4 pm
+              ]
+          }
+      };
+      filter = {
+          $and: [dateFilter, timeFilter]
+      };
+    } else if (typesOfTrip === "regular_trips" && (searchBy === "trip_date" || searchBy === "createdAt")) {
+          
+          const dateFilter = {
+            [searchBy]: {
+                $gte: new Date(`${dateFrom}T00:00:00`),
+                $lte: new Date(`${dateTo}T23:59:59`)
+            }
+            
+        };
+
+        const timeFilter = {
+          $or: [
+              {
+                  $and: [
+                      { $expr: { $gte: [{ $hour: `$trip_date` }, 17] } }, // 1am  
+                      { $expr: { $lt: [{ $hour: `$trip_date` }, 24] } }  //8am
+                  ]
+              },
+              {
+                  $and: [
+                      { $expr: { $gte: [{ $hour: `$trip_date` }, 0] } }, // 8am 
+                      { $expr: { $lt: [{ $hour: `$trip_date` }, 14] } }  //10pm
+                  ]
+              }
+          ]
+      };
+      
+    
+        filter = {
+            $and: [dateFilter, timeFilter]
+        };
+      }
+      else if (typesOfTrip === "early_trips") {
+        filter = {
+          $expr: {
+            $and: [
+              { $gte: [{ $hour: '$trip_date' }, 14] }, // 10 pm
+              { $lt: [{ $hour: '$trip_date' }, 16] }  // 12 am
+            ]
+          }
+        };
+      } else if (typesOfTrip === "regular_trips") {
+        filter = {
+          $expr: {
+            $or: [
+              {
+                $and: [
+                  { $gte: [{ $hour: '$trip_date' }, 17] }, // 1am
+                  { $lt: [{ $hour: '$trip_date' }, 24] } // 8am
+                ]
+              },
+              {
+                $and: [
+                  { $gte: [{ $hour: '$trip_date' }, 0] }, // 8am
+                  { $lt: [{ $hour: '$trip_date' }, 14] } // 10pm
+                ]
+              }
+            ]
+          }
+        };
+      }
+      else {
+        filter =
+        searchBy === "trip_date" || searchBy === "createdAt"
+        ? {
+            [searchBy]: {
+              $gte: `${dateFrom}T00:00:00`,
+              $lte: `${dateTo}T23:59:59`,
+            },
+          }
+        : {};
+      }
+    
+      // added additional on this field added service_trips
+    if (searchBy === "trip_date" || typesOfTrip === "early_trips" || typesOfTrip === "regular_trips" || typesOfTrip === "special_trips" || typesOfTrip === "service_trips"  || searchBy === "createdAt") {
       sort = { trip_date: "asc" };
     }else{
       sort = { createdAt: "desc" };
