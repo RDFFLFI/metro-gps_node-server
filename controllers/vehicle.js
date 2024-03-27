@@ -105,7 +105,7 @@ exports.getVehicles = (req, res, next) => {
   const searchItem = req.query.search || "";
   const searchBy =
     req.query.searchBy === "_id" ? "plate_no" : req.query.searchBy;
-
+ 
   Vehicle.find({ [searchBy]: { $regex: `.*${searchItem}.*`, $options: "i" } })
     .countDocuments()
     .then((count) => {

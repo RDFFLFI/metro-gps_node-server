@@ -417,7 +417,7 @@ exports.fetchTripLive = async (req, res, next) => {
         employee_id: 1,
         first_name: 2,
         last_name: 3,
-        department: 4,
+        department: 4,  
       })
       .populate("vehicle_id", { plate_no: 1 })
       .sort(sort)
