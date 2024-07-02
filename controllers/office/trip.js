@@ -267,7 +267,7 @@ exports.fetchAllTrips = async (req, res, next) => {
 
   try {
     let pageNumber = parseInt(page) || 1;
-    let itemsPerPage = parseInt(limit) || 10;
+    let itemsPerPage = parseInt(limit) || 0; // set to 0 for the reports
 
     // If page or limit is undefined, remove pagination
     if (isNaN(pageNumber) || isNaN(itemsPerPage)) {

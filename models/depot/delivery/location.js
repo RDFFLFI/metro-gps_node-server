@@ -30,6 +30,9 @@ const locationSchema = new Schema({
   odometer: {
     type: Number,
   },
+  temperature : { // add this field for left
+    type: String,
+  },
   destination: {
     type: String,
   },

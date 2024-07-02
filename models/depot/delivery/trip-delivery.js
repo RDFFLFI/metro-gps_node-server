@@ -65,6 +65,9 @@ const tripSchema = new Schema(
     temperature: {
       type: Number,
     },
+    route : { // add this new left
+      type: String,
+    },
     crates_transaction: {
       type: JSON,
     },

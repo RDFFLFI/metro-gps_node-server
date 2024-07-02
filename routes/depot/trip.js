@@ -37,6 +37,8 @@ router.get("/trips-delivery", isAuth, tripDeliveryController.getTripDelivery);
 
 //new get 
 router.get("/fetch-trips-delivery", isAuth, tripDeliveryController.fetchTripDelivery);
+
+
 router.get(
   "/apk-trips-delivery",
   isAuth,

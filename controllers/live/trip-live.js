@@ -370,7 +370,7 @@ exports.fetchTripLive = async (req, res, next) => {
 
   try {
     let pageNumber = parseInt(page) || 1;
-    let itemsPerPage = parseInt(limit) || 10;
+    let itemsPerPage = parseInt(limit) || 0;
     let totalItems;
 
 

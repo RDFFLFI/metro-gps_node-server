@@ -1,6 +1,7 @@
 const TripDelivery = require("../../models/depot/delivery/trip-delivery");
 const Location = require("../../models/depot/delivery/location");
 const Diesel = require("../../models/depot/delivery/diesel");
+const { ObjectId } = require('mongodb');
 
 exports.createApkTripDelivery = (req, res, next) => {
   let odometer_image_path;
@@ -26,6 +27,7 @@ exports.createApkTripDelivery = (req, res, next) => {
     companion,
     points,
     temperature,
+    route, // new field
     crates_transaction,
   } = req.body;
 
@@ -45,6 +47,7 @@ exports.createApkTripDelivery = (req, res, next) => {
     companion: (companion && JSON.parse(companion)) || [],
     points: (points && JSON.parse(points)) || [],
     temperature,
+    route, // new field
     crates_transaction:
       (crates_transaction && JSON.parse(crates_transaction)) || [],
   };
@@ -265,7 +268,6 @@ TripDelivery.find(filter)
               el.toString().toLowerCase().includes(searchItem)
             );
           }
-
           if (!obj) return false;
         }
 
@@ -298,13 +300,7 @@ exports.fetchTripDelivery = async (req, res, next) => {
 
   try {
     let pageNumber = parseInt(page) || 1;
-    let itemsPerPage = parseInt(limit) || 10;
-
-    // If page or limit is undefined, remove pagination
-    if (isNaN(pageNumber) || isNaN(itemsPerPage)) {
-      pageNumber = 1;
-      itemsPerPage = 0; // Set to 0 to retrieve all data
-    }
+    let itemsPerPage = parseInt(limit) || 0;
 
     const skipValue = (pageNumber - 1) * itemsPerPage;
     let searchItem = req.query.search || "";

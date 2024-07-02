@@ -276,13 +276,7 @@ exports.fetchTripHauling = async (req, res, next) => {
 
   try {
     let pageNumber = parseInt(page) || 1;
-    let itemsPerPage = parseInt(limit) || 10;
-
-    // If page or limit is undefined, remove pagination
-    if (isNaN(pageNumber) || isNaN(itemsPerPage)) {
-      pageNumber = 1;
-      itemsPerPage = 0; // Set to 0 to retrieve all data
-    }
+    let itemsPerPage = parseInt(limit) || 0;
 
     const skipValue = (pageNumber - 1) * itemsPerPage;
     let searchItem = req.query.search || "";

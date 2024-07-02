@@ -24,6 +24,9 @@ const dashboardRoutes = require("./routes/dashboard");
 
 const ApkManagement = require("./routes/apk_management");
 
+// new added
+const RouteManagement = require("./routes/routes");
+
 const app = express();
 
 // Images Upload
@@ -87,8 +90,8 @@ app.use(
 );
 
 // request file size
-app.use(bodyParse.json({ limit: "100mb" }));
-app.use(bodyParse.urlencoded({ limit: "100mb", extended: true }));
+app.use(bodyParse.json({ limit: "500mb" }));
+app.use(bodyParse.urlencoded({ limit: "500mb", extended: true }));
 
 const uploadApk = multer({ storage: apkstorage, fileFilter: apkfileFilter,  limits: { fileSize: 40 * 1024 * 1024 } }).single("apk");
 
@@ -129,6 +132,9 @@ app.use("/dashboard", dashboardRoutes);
 
 // APK Routes
 app.use("/apk", uploadApk, ApkManagement);
+
+// Routes
+app.use("/routes", RouteManagement);
 
 // Error Cb
 app.use((error, req, res, next) => {
