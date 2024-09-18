@@ -14,11 +14,11 @@ const locationSchema = new Schema({
   },
   lat: {
     type: Number,
-    required: true,
+    // required: true,
   },
   long: {
     type: Number,
-    required: true,
+    // required: true,
   },
   status: {
     type: String,

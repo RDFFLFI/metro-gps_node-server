@@ -5,6 +5,7 @@ const Location = require("../../models/office/location");
 const Diesel = require("../../models/office/diesel");
 
 exports.createApkTrip = (req, res, next) => {
+  console.log('first')
   let odometer_image_path;
   let odometer_done_image_path;
 
@@ -34,9 +35,9 @@ exports.createApkTrip = (req, res, next) => {
     odometer_done: odometer_done || null,
     odometer_image_path: odometer_image_path || null,
     odometer_done_image_path: odometer_done_image_path || null,
-    companion: JSON.parse(companion) || null,
+    companion: (companion && JSON.parse(companion)) || [],
+    points: (points && JSON.parse(points)) || [],
     others: others || "",
-    points: JSON.parse(points) || [],
     trip_date: trip_date || new Date(),
   };
 
@@ -44,7 +45,7 @@ exports.createApkTrip = (req, res, next) => {
     .then((result) => {
       trip_id = result._id;
 
-      const locationsPromises = (JSON.parse(req.body.locations) || []).map(
+      const locationsPromises = (Boolean(req.body?.locations?.length) && JSON.parse(req.body.locations) || []).map(
         (location) => {
           return Location.create({ trip_id: trip_id, ...location }).then(
             async (result) => {
@@ -59,7 +60,7 @@ exports.createApkTrip = (req, res, next) => {
         }
       );
 
-      const dieselsPromises = (JSON.parse(req.body.diesels) || []).map(
+      const dieselsPromises = (Boolean(req.body?.diesels?.length) && JSON.parse(req.body.diesels) || []).map(
         (diesel) => {
           return Diesel.create({ trip_id: trip_id, ...diesel }).then(
             async (result) => {

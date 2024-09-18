@@ -37,6 +37,11 @@ const dieselSchema = new Schema({
     type: Number,
     required: true,
   },
+  //add this for enhancement
+  po_number: {
+    type: Number,
+    // required: true,
+  },
 });
 
 module.exports = mongoose.model("DieselOffice", dieselSchema);

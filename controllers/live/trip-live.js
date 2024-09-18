@@ -63,6 +63,9 @@ exports.createApkTripLive = (req, res, next) => {
     odometer_image_path = req.files[0].path.replace("\\", "/");
     odometer_done_image_path = req.files[1].path.replace("\\", "/");
   }
+  //  else {
+  //   return res.status(400).json({ error: "At least two files are required." });
+  // }
 
   const {
     trip_date,
@@ -98,6 +101,7 @@ exports.createApkTripLive = (req, res, next) => {
     total_bags_delivered,
     transactions: (transactions && JSON.parse(transactions)) || [],
   };
+
 
   let trip_id;
 
