@@ -1,6 +1,6 @@
-const TripLive = require("../../models/live/trip");
-const Location = require("../../models/live/location");
-const Diesel = require("../../models/live/diesel");
+const TripLive = require("../../models/live/delivery/trip");
+const Location = require("../../models/live/delivery/location");
+const Diesel = require("../../models/live/delivery/diesel");
 
 const formatDateToYYYYMMDD = (date) => {
   const { year, month, day } = {
@@ -82,6 +82,7 @@ exports.createApkTripLive = (req, res, next) => {
     total_bags,
     total_bags_delivered,
     transactions,
+    move_order_number,
   } = req.body;
 
   const tripObj = {
@@ -98,6 +99,7 @@ exports.createApkTripLive = (req, res, next) => {
     points: (points && JSON.parse(points)) || [],
     trip_type,
     total_bags,
+    move_order_number,
     total_bags_delivered,
     transactions: (transactions && JSON.parse(transactions)) || [],
   };

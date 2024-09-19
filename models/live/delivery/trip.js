@@ -49,6 +49,9 @@ const tripSchema = new Schema(
       type: String,
       required: true,
     },
+    move_order_number: {
+      type: String,
+    },
     total_bags: {
       type: Number,
     },
