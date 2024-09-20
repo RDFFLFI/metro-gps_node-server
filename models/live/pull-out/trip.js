@@ -18,8 +18,8 @@ const tripSchema = new Schema(
       ref: "Vehicle",
       required: true,
     },
-    locations: [{ type: Schema.Types.ObjectId, ref: "LocationLive" }],
-    diesels: [{ type: Schema.Types.ObjectId, ref: "DieselLive" }],
+    locations: [{ type: Schema.Types.ObjectId, ref: "LocationPullOut" }],
+    diesels: [{ type: Schema.Types.ObjectId, ref: "DieselPullOut" }],
     odometer: {
       type: Number,
       required: true,
@@ -50,9 +50,12 @@ const tripSchema = new Schema(
       required: true,
     },
     move_order_number: {
-      type: Number,
+      type: String,
     },
     total_bags: {
+      type: Number,
+    },
+    total_bags_collected: {
       type: Number,
     },
     total_bags_delivered: {
@@ -65,4 +68,4 @@ const tripSchema = new Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("TripLive", tripSchema);
+module.exports = mongoose.model("TripPullOut", tripSchema);
