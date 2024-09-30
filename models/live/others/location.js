@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const locationSchema = new Schema({
   trip_id: {
     type: Schema.Types.ObjectId,
-    ref: "TripLive",
+    ref: "TripOthers",
     required: true,
   },
   date: {
@@ -14,11 +14,11 @@ const locationSchema = new Schema({
   },
   lat: {
     type: Number,
-    // required: true,
+    required: true,
   },
   long: {
     type: Number,
-    // required: true,
+    required: true,
   },
   status: {
     type: String,
@@ -35,4 +35,4 @@ const locationSchema = new Schema({
   },
 });
 
-module.exports = mongoose.model("LocationLive", locationSchema);
+module.exports = mongoose.model("LocationOthers", locationSchema);

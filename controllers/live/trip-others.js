@@ -1,6 +1,6 @@
-const TripPullOut = require("../../models/live/pull-out/trip");
-const Location = require("../../models/live/pull-out/location");
-const Diesel = require("../../models/live/pull-out/diesel");
+const TripOthers = require("../../models/live/others/trip");
+const Location = require("../../models/live/others/location");
+const Diesel = require("../../models/live/others/diesel");
 
 const formatDateToYYYYMMDD = (date) => {
   const { year, month, day } = {
@@ -12,7 +12,7 @@ const formatDateToYYYYMMDD = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-exports.updateTripPullOut = (req, res, next) => {
+exports.updateTripOthers = (req, res, next) => {
   const tripId = req.params.tripId;
 
   const {
@@ -23,7 +23,7 @@ exports.updateTripPullOut = (req, res, next) => {
     total_bags_delivered,
   } = req.body;
 
-  TripPullOut.findById(tripId)
+  TripOthers.findById(tripId)
     .then((trip) => {
       if (!trip) {
         const error = new Error("Could not found trip");
@@ -31,7 +31,7 @@ exports.updateTripPullOut = (req, res, next) => {
         throw error;
       }
 
-      return TripPullOut.findOneAndUpdate(
+      return TripOthers.findOneAndUpdate(
         { _id: trip._id },
         {
           odometer: odometer || trip.odometer,
@@ -55,7 +55,7 @@ exports.updateTripPullOut = (req, res, next) => {
     });
 };
 
-exports.createApkTripPullOut = (req, res, next) => {
+exports.createApkTripOthers = (req, res, next) => {
   let odometer_image_path;
   let odometer_done_image_path;
 
@@ -104,7 +104,7 @@ exports.createApkTripPullOut = (req, res, next) => {
 
   let trip_id;
 
-  TripPullOut.create(tripObj)
+  TripOthers.create(tripObj)
     .then(async (result) => {
       trip_id = result.id;
 
@@ -192,7 +192,7 @@ exports.createApkTripPullOut = (req, res, next) => {
       return { locationsIds, dieselsIds };
     })
     .then(async (result) => {
-      const trip = await TripPullOut.findOneAndUpdate(
+      const trip = await TripOthers.findOneAndUpdate(
         { _id: trip_id },
         {
           $push: { diesels: result.dieselsIds, locations: result.locationsIds },
@@ -211,7 +211,7 @@ exports.createApkTripPullOut = (req, res, next) => {
 
       res
         .status(201)
-        .json({ message: "Done creating apk live trip", data: trip });
+        .json({ message: "Done creating apk others trip", data: trip });
     })
     .catch((err) => {
       if (!err.statusCode) {
@@ -221,7 +221,7 @@ exports.createApkTripPullOut = (req, res, next) => {
     });
 };
 
-exports.getApkTripPullOut = (req, res, next) => {
+exports.getApkTripTripOthers = (req, res, next) => {
   const currentPage = req.query.page || 1;
   const perPage = req.query.limit || 25;
   const dateItem = req.query.date || formatDateToYYYYMMDD(new Date());
@@ -237,7 +237,7 @@ exports.getApkTripPullOut = (req, res, next) => {
         }
       : { user_id: req.userId };
 
-  TripPullOut.find(filter)
+  TripTripOthers.find(filter)
     .populate({ path: "locations", options: { sort: { date: 1 } } })
     .populate("diesels")
     .populate("user_id", {
@@ -271,7 +271,7 @@ exports.getApkTripPullOut = (req, res, next) => {
 
 
 //old get trips live
-exports.getTripPullOut = (req, res, next) => {
+exports.getTripTripOthers = (req, res, next) => {
   const query = req.query;
   const currentPage = query.page || 1;
   const perPage = query.limit || 25;
@@ -291,7 +291,7 @@ exports.getTripPullOut = (req, res, next) => {
         }
       : {};
 
-    TripPullOut.find(filter)
+    TripTripOthers.find(filter)
     .populate({ path: "locations", options: { sort: { date: 1 } } })
     .populate("diesels")
     .populate("user_id", {
@@ -367,8 +367,9 @@ exports.getTripPullOut = (req, res, next) => {
 };
 
 
-// new get trips live 
-exports.fetchTripPullOut = async (req, res, next) => {
+// new get trips others 
+exports.fetchTripOthers = async (req, res, next) => {
+  // console.log('others')
   const { page, limit } = req?.query;
 
   try {
@@ -410,7 +411,7 @@ exports.fetchTripPullOut = async (req, res, next) => {
       sort = { createdAt: "desc" };
     }
 
-    const all_trips = await TripPullOut.find(filter)
+    const all_trips = await TripOthers.find(filter)
       .populate({
         path: "locations",
         options: { sort: { date: 1 } },
@@ -422,7 +423,7 @@ exports.fetchTripPullOut = async (req, res, next) => {
         last_name: 3,
         department: 4,  
       })
-      .populate("vehicle_id", { plate_no: 1 , name: 2})
+      .populate("vehicle_id", { plate_no: 1 })
       .sort(sort)
       .skip(skipValue)
       .limit(itemsPerPage);
@@ -456,12 +457,12 @@ exports.fetchTripPullOut = async (req, res, next) => {
       if (searchItem != null && searchItem !== "") {
         totalItems = filteredTrips.length;
       } else {
-        totalItems = await TripPullOut.countDocuments(filter);
+        totalItems = await TripOthers.countDocuments(filter);
       }
 
 
     const result = {
-      message: "Success get pull out trips",
+      message: "Success get others trips",
       data: filteredTrips,
       pagination:{
         totalItems: totalItems,
