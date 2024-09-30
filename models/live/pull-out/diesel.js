@@ -10,7 +10,11 @@ const dieselSchema = new Schema({
   },
   gas_station_name: {
     type: String,
-    required: true,
+    // required: true,
+  },
+  maintenance_remarks: {
+    type: String,
+    // required: true,
   },
   trip_id: {
     type: Schema.Types.ObjectId,
