@@ -27,7 +27,7 @@ const dieselSchema = new Schema({
   },
   liter: {
     type: Number,
-    required: true,
+    // required: true,
   },
   lat: {
     type: Number,

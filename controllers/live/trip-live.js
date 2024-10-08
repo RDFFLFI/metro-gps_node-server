@@ -171,6 +171,7 @@ exports.createApkTripLive = (req, res, next) => {
           {
             gas_station_id: "63ce1ffdf05b440dbd697d9a",
             gas_station_name: "Total",
+            maintenance_remarks: "maintenance_remarks",
             odometer: 348197,
             liter: 21.19,
             lat: 15.0836639,

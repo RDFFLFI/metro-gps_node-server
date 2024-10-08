@@ -17,6 +17,7 @@ const tripSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Vehicle",
       required: true,
+      
     },
     locations: [{ type: Schema.Types.ObjectId, ref: "LocationOthers" }],
     diesels: [{ type: Schema.Types.ObjectId, ref: "DieselOthers" }],
