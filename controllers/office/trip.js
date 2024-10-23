@@ -263,119 +263,302 @@ exports.getTrips = (req, res, next) => {
 
 
 // New get trips
+// exports.fetchAllTrips = async (req, res, next) => {
+//   const { page, limit } = req?.query;
+
+//   try {
+//     let pageNumber = parseInt(page) || 1;
+//     let itemsPerPage = parseInt(limit) || 0; // set to 0 for the reports
+
+//     // If page or limit is undefined, remove pagination
+//     if (isNaN(pageNumber) || isNaN(itemsPerPage)) {
+//       pageNumber = 1;
+//       itemsPerPage = 0; // Set to 0 to retrieve all data
+//     }
+
+//     const skipValue = (pageNumber - 1) * itemsPerPage;
+//     let searchItem = req.query.search || "";
+//     const searchBy = req.query.searchBy || "_id";
+//     const dateItem = req.query.date;
+//     const userDepartment = req?.department;
+//     const show_all_departments = req?.show_all_departments;
+//     const dateFrom = req.query.dateFrom;
+//     const dateTo = req.query.dateTo;
+    
+//     let totalItems;
+    
+//     let filter =
+//       searchBy === "trip_date" || searchBy === "createdAt"
+//         ? {
+//             [searchBy]: {
+//               $gte: `${dateFrom}T00:00:00`,
+//               $lte: `${dateTo}T23:59:59`,
+//             },
+//           }
+//         : {};
+
+//     let sort;
+
+//     if (searchBy === "trip_date") {
+//       sort = { trip_date: "asc" };
+//     }
+//     else if (searchBy === "createdAt") {
+//       sort = { createdAt: "asc" };
+//     }else{
+//       sort = { createdAt: "desc" };
+//     }
+    
+//     const all_trips = await Trip.find(filter)
+//       .populate({
+//         path: "locations",
+//         options: { sort: { date: 1 } },
+//       })
+//       .populate("diesels")
+//       .populate("user_id", {
+//         employee_id: 1,
+//         first_name: 2,
+//         last_name: 3,
+//         department: 4,
+//       })
+//       .populate("vehicle_id", { plate_no: 1 , km_per_liter: 2})
+//       .sort(sort) 
+//       .skip(skipValue)
+//       .limit(itemsPerPage);        
+
+//     // Apply additional filtering based on searchBy and searchItem
+//     const filteredTrips = all_trips.filter((trip) => {
+//       searchItem = searchItem.toLowerCase();
+//       const searchProps = searchBy.split(".");
+//       let obj = trip;
+//       for (const prop of searchProps) {
+//         obj = obj[prop];
+//         if (Array.isArray(obj)) {
+//           if (prop === "companion") {
+//             return obj.find((el) =>
+//               el.first_name
+//                 .toString()
+//                 .toLowerCase()
+//                 .includes(searchItem)
+//             );
+//           }
+//           return obj.find(
+//             (el) =>
+//               el && el.toString().toLowerCase().includes(searchItem)
+//           );
+//         }
+//         if (!obj) return false;
+//       }
+//       return obj.toString().toLowerCase().includes(searchItem);
+//     });
+
+//     if (searchItem != null && searchItem !== "") {
+//       totalItems = filteredTrips.length;
+//     } else {
+//       totalItems = await Trip.countDocuments(filter);
+//     }
+
+//     const result = {
+//       message: "Success get SG Trips",
+//       data: filteredTrips,
+//       pagination:{
+//         totalItems: totalItems,
+//         limit: itemsPerPage,
+//         currentPage: pageNumber,
+//       },
+//       previous_page:
+//         pageNumber > 1 && filteredTrips?.length ? pageNumber - 1 : null,
+//       next_page:
+//         itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
+//     };
+//     res.status(200).json(result);
+//     return next();
+//   } catch (error) {
+//     // Handle the error appropriately
+//     res.status(500).json({ error: "Internal Server Error" });
+//     return next(error);
+//   }
+// };
+
+// AGGREGATE 
 exports.fetchAllTrips = async (req, res, next) => {
-  const { page, limit } = req?.query;
+  const {
+    page,
+    limit,
+    search = "",
+    searchBy = "_id",
+  } = req.query;
+
+  let {
+    dateFrom,
+    dateTo,
+  } = req.query;
+  
 
   try {
     let pageNumber = parseInt(page) || 1;
-    let itemsPerPage = parseInt(limit) || 0; // set to 0 for the reports
-
-    // If page or limit is undefined, remove pagination
-    if (isNaN(pageNumber) || isNaN(itemsPerPage)) {
-      pageNumber = 1;
-      itemsPerPage = 0; // Set to 0 to retrieve all data
-    }
-
+    let itemsPerPage = parseInt(limit) || 0; // Set to 0 for no limit
     const skipValue = (pageNumber - 1) * itemsPerPage;
-    let searchItem = req.query.search || "";
-    const searchBy = req.query.searchBy || "_id";
-    const dateItem = req.query.date;
-    const userDepartment = req?.department;
-    const show_all_departments = req?.show_all_departments;
-    const dateFrom = req.query.dateFrom;
-    const dateTo = req.query.dateTo;
-    
-    let totalItems;
-    
-    let filter =
-      searchBy === "trip_date" || searchBy === "createdAt"
-        ? {
-            [searchBy]: {
-              $gte: `${dateFrom}T00:00:00`,
-              $lte: `${dateTo}T23:59:59`,
-            },
-          }
-        : {};
 
-    let sort;
+    const pipeline = [];
+    let filter = {};
 
-    if (searchBy === "trip_date") {
-      sort = { trip_date: "asc" };
-    }
-    else if (searchBy === "createdAt") {
-      sort = { createdAt: "asc" };
-    }else{
-      sort = { createdAt: "desc" };
-    }
-    
-    const all_trips = await Trip.find(filter)
-      .populate({
-        path: "locations",
-        options: { sort: { date: 1 } },
-      })
-      .populate("diesels")
-      .populate("user_id", {
-        employee_id: 1,
-        first_name: 2,
-        last_name: 3,
-        department: 4,
-      })
-      .populate("vehicle_id", { plate_no: 1 , km_per_liter: 2})
-      .sort(sort) 
-      .skip(skipValue)
-      .limit(itemsPerPage);        
-
-    // Apply additional filtering based on searchBy and searchItem
-    const filteredTrips = all_trips.filter((trip) => {
-      searchItem = searchItem.toLowerCase();
-      const searchProps = searchBy.split(".");
-      let obj = trip;
-      for (const prop of searchProps) {
-        obj = obj[prop];
-        if (Array.isArray(obj)) {
-          if (prop === "companion") {
-            return obj.find((el) =>
-              el.first_name
-                .toString()
-                .toLowerCase()
-                .includes(searchItem)
-            );
-          }
-          return obj.find(
-            (el) =>
-              el && el.toString().toLowerCase().includes(searchItem)
-          );
+    // Lookup related documents first
+    pipeline.push(
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user_id",
+          pipeline: [
+            { $project: { _id: 1, employee_id: 1, first_name: 1, last_name: 1, department: 1 } }
+          ]
         }
-        if (!obj) return false;
+      },
+      {
+        $unwind: { path: "$user_id", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $lookup: {
+          from: "vehicles",
+          localField: "vehicle_id",
+          foreignField: "_id",
+          as: "vehicle_id",
+          pipeline: [
+            { $project: { _id: 1, plate_no: 1, name: 1 } }
+          ]
+        }
+      },
+      {
+        $unwind: { path: "$vehicle_id", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $lookup: {
+          from: "locationoffices",
+          localField: "locations",
+          foreignField: "_id",
+          as: "locations",
+        },
+      },
+      {
+        $lookup: {
+          from: "dieseloffices",
+          localField: "diesels",
+          foreignField: "_id",
+          as: "diesels",
+        },
       }
-      return obj.toString().toLowerCase().includes(searchItem);
-    });
+    );
 
-    if (searchItem != null && searchItem !== "") {
-      totalItems = filteredTrips.length;
-    } else {
-      totalItems = await Trip.countDocuments(filter);
+    // Constructing filter based on search criteria
+    if (search) {
+      const searchTerm = search.trim(); // Case-insensitive regex
+      const isNumericSearch = !isNaN(searchTerm);
+      
+      if (searchBy === "user_id.employee_id" || searchBy === "user_id.department") {
+        filter[`user_id.${searchBy.split('.').pop()}`] = { $regex: searchTerm };
+      } else if (searchBy === "user_id._id") { // Added condition for user_id._id
+        try {
+          const objectId = ObjectId(searchTerm); // Convert to ObjectId
+          filter["user_id._id"] = objectId; // Set filter for user_id._id
+        } catch (err) {
+          console.error("Invalid ObjectId:", err.message);
+        }
+      } else if (searchBy === "vehicle_id.plate_no") {
+        filter["vehicle_id.plate_no"] = { $regex: searchTerm };
+      } else if (searchBy === "diesels.gas_station_name") {
+        filter["diesels.gas_station_name"] = { $regex: searchTerm };
+      } else if (searchBy === "companion.first_name") {
+        filter["companion.first_name"] = { $regex: searchTerm };
+      } else if (searchBy === "odometer" && isNumericSearch) {
+        filter["odometer"] = parseInt(searchTerm, 10); 
+      } else if (searchBy === "odometer_done" && isNumericSearch) {
+        filter["odometer_done"] = parseInt(searchTerm, 10); 
+      } else if (searchBy === "total_bags" && isNumericSearch) {
+        filter["total_bags"] = parseInt(searchTerm, 10); 
+      } else if (searchBy === "total_bags_delivered" && isNumericSearch) {
+        filter["total_bags_delivered"] = parseInt(searchTerm, 10); 
+      } else if (searchBy === "_id") {
+        try {
+          const objectId = ObjectId(searchTerm);
+          filter[searchBy] = objectId;
+        } catch (err) {
+          console.error("Invalid ObjectId:", err.message);
+        }
+      } else {
+        filter[searchBy] = { $regex: searchTerm };
+      }
     }
+    
+
+    // Add date filters if applicable
+    if (dateFrom && dateTo) {
+      // Convert date strings to proper Date objects and set time boundaries
+    let dateFromObj = new Date(dateFrom).setUTCHours(0, 0, 0, 0);
+    let dateToObj = new Date(dateTo).setUTCHours(23, 59, 59, 999);
+
+    const dateFilter = {};
+    
+    // Check searchBy and add filters based on the provided date range
+    if (searchBy === "trip_date") {
+      dateFilter.trip_date = { $gte: new Date(dateFromObj), $lte: new Date(dateToObj) };
+    }
+    if (searchBy === "createdAt") {
+      dateFilter.createdAt = { $gte: new Date(dateFromObj), $lte: new Date(dateToObj) };
+    }
+    
+    // Merge date filters with the existing filter
+    Object.assign(filter, dateFilter);
+    
+  }
+
+    console.log(filter);
+    // Add the $match stage now that all lookups and filters are set up
+    if (Object.keys(filter).length > 0) {
+      pipeline.push({ $match: filter });
+    }
+
+    // Sorting logic
+    let sort = { createdAt: -1 }; // Default sort by createdAt descending
+    if (searchBy === "trip_date") {
+      sort = { trip_date: 1 }; // Ascending by trip_date
+    } else if (searchBy === "createdAt") {
+      sort = { createdAt: 1 }; // Ascending by createdAt
+    }
+    pipeline.push({ $sort: sort });
+
+    // Count the total number of matching documents without skip/limit
+    const totalItemsPipeline = [...pipeline];
+    const totalCountResult = await Trip.aggregate([
+      ...totalItemsPipeline,
+      { $count: "totalItems" }
+    ]);
+    const totalItems = totalCountResult.length > 0 ? totalCountResult[0].totalItems : 0;
+
+    // Pagination
+    if (itemsPerPage > 0) {
+      pipeline.push({ $skip: skipValue }, { $limit: itemsPerPage });
+    }
+
+    // Execute the aggregation
+    const all_trips = await Trip.aggregate(pipeline);
 
     const result = {
       message: "Success get SG Trips",
-      data: filteredTrips,
-      pagination:{
+      data: all_trips,
+      pagination: {
         totalItems: totalItems,
         limit: itemsPerPage,
         currentPage: pageNumber,
       },
-      previous_page:
-        pageNumber > 1 && filteredTrips?.length ? pageNumber - 1 : null,
-      next_page:
-        itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
+      previous_page: pageNumber > 1 ? pageNumber - 1 : null,
+      next_page: itemsPerPage > 0 && itemsPerPage * pageNumber < totalItems ? pageNumber + 1 : null,
     };
+
     res.status(200).json(result);
-    return next();
   } catch (error) {
-    // Handle the error appropriately
+    console.error("Error fetching trips:", error); // More specific error logging
     res.status(500).json({ error: "Internal Server Error" });
-    return next(error);
   }
 };
 

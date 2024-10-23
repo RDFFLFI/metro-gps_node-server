@@ -432,6 +432,7 @@ exports.login = (req, res, next) => {
       const token = jwt.sign(
         {
           userId: loadedUser._id.toString(),
+          employee_id: loadedUser?.employee_id,
           role: loadedUser?.role,
           profile: loadedUser.profile,
           first_name: loadedUser.first_name,
