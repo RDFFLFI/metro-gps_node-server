@@ -94,13 +94,32 @@ exports.createApkManagement = async (req, res, next) => {
 
 
   exports.getApkManagement = (req, res, next) => {
-    let totalItems;
-  
     ApkManagement.find()
       .then((result) => {
+        // Map over the result to add file size for each apk
+        const apkDataWithSize = result.map((apk) => {
+          // Resolve the absolute path from the root of the project
+          const apkFilePath = path.resolve('./', apk.apk_file_path); // Start from root
+          let fileSizeInMB = 'File not found';
+          
+          try {
+            // Get the file size
+            const stats = fs.statSync(apkFilePath);
+            const fileSizeInBytes = stats.size;
+            fileSizeInMB = (fileSizeInBytes / (1024 * 1024)).toFixed(2) + 'MB'; // Convert to MB
+          } catch (err) {
+            console.error(`Error getting file size for ${apk.apk_file_path}:`, err);
+          }
+  
+          return {
+            ...apk.toObject(), // Spread existing APK data
+            apk_file_size: fileSizeInMB, // Add file size
+          };
+        });
+  
         res.status(200).json({
           message: "Fetch Apk successfully",
-          data: result,
+          data: apkDataWithSize,
         });
       })
       .catch((err) => {
