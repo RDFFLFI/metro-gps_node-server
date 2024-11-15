@@ -8,18 +8,6 @@ const tripSchema = new Schema(
       type: Date,
       required: true,
     },
-    trip_type: {
-      type: String,
-      required: true,
-    },
-    trip_category: {
-      type: String,
-      required: true,
-    },
-    destination: {
-      type: String,
-      required: true,
-    },
     user_id: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -30,13 +18,8 @@ const tripSchema = new Schema(
       ref: "Vehicle",
       required: true,
     },
-    locations: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "LocationDelivery",
-      },
-    ],
-    diesels: [{ type: Schema.Types.ObjectId, ref: "DieselDelivery" }],
+    locations: [{ type: Schema.Types.ObjectId, ref: "LocationLive" }],
+    diesels: [{ type: Schema.Types.ObjectId, ref: "DieselLive" }],
     odometer: {
       type: Number,
       required: true,
@@ -62,17 +45,25 @@ const tripSchema = new Schema(
     points: {
       type: JSON,
     },
-    temperature: {
+    trip_type: {
+      type: String,
+      required: true,
+    },
+    move_order_number: {
+      type: Number,
+      // required: true,
+    },
+    total_bags: {
       type: Number,
     },
-    route : { // add this new left
-      type: String,
+    total_bags_delivered: {
+      type: Number,
     },
-    crates_transaction: {
+    transactions: {
       type: JSON,
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("TripDelivery", tripSchema);
+module.exports = mongoose.model("TripLive", tripSchema);

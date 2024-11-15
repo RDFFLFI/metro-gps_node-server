@@ -24,6 +24,10 @@ const dashboardRoutes = require("./routes/dashboard");
 
 const ApkManagement = require("./routes/apk_management");
 
+// new added
+const RouteManagement = require("./routes/routes");
+const ApkManagementModel = require("./models/apk_management");
+
 const app = express();
 
 // Images Upload
@@ -87,10 +91,10 @@ app.use(
 );
 
 // request file size
-app.use(bodyParse.json({ limit: "100mb" }));
-app.use(bodyParse.urlencoded({ limit: "100mb", extended: true }));
+app.use(bodyParse.json({ limit: "500mb" }));
+app.use(bodyParse.urlencoded({ limit: "500mb", extended: true }));
 
-const uploadApk = multer({ storage: apkstorage, fileFilter: apkfileFilter,  limits: { fileSize: 40 * 1024 * 1024 } }).single("apk");
+const uploadApk = multer({ storage: apkstorage, fileFilter: apkfileFilter,  limits: { fileSize: 200 * 1024 * 1024 } }).single("apk");
 
 const uploadImage = multer({ storage: storage, fileFilter: fileFilter }).single(
   "image"
@@ -130,6 +134,9 @@ app.use("/dashboard", dashboardRoutes);
 // APK Routes
 app.use("/apk", uploadApk, ApkManagement);
 
+// Routes
+app.use("/routes", RouteManagement);
+
 // Error Cb
 app.use((error, req, res, next) => {
   const status = error.statusCode || 500;
@@ -137,6 +144,16 @@ app.use((error, req, res, next) => {
   const data = error.data;
   res.status(status).json({ error: message, data: data });
 });
+
+//Download Apk
+app.get('/download/apk', async (req, res) => {
+ // const file = req.params.file;
+	const ver = await ApkManagementModel.find().select('version_name')
+    const filename = ver[0].version_name
+   const fileLocation = path.join(__dirname, 'apk', `${filename}.apk`);
+   res.download(fileLocation, `${filename}.apk`);
+});
+
 // Database connection
 mongoose
   .connect(process.env.DB_CONN)

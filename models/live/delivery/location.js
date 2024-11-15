@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const locationSchema = new Schema({
   trip_id: {
     type: Schema.Types.ObjectId,
-    ref: "TripDelivery",
+    ref: "TripLive",
     required: true,
   },
   date: {
@@ -30,12 +30,9 @@ const locationSchema = new Schema({
   odometer: {
     type: Number,
   },
-  temperature : { // add this field for left
-    type: String,
-  },
   destination: {
     type: String,
   },
 });
 
-module.exports = mongoose.model("LocationDelivery", locationSchema);
+module.exports = mongoose.model("LocationLive", locationSchema);

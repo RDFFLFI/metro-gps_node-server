@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const locationSchema = new Schema({
   trip_id: {
     type: Schema.Types.ObjectId,
-    ref: "TripDelivery",
+    ref: "TripPullOut",
     required: true,
   },
   date: {
@@ -14,11 +14,11 @@ const locationSchema = new Schema({
   },
   lat: {
     type: Number,
-    // required: true,
+    required: true,
   },
   long: {
     type: Number,
-    // required: true,
+    required: true,
   },
   status: {
     type: String,
@@ -30,12 +30,9 @@ const locationSchema = new Schema({
   odometer: {
     type: Number,
   },
-  temperature : { // add this field for left
-    type: String,
-  },
   destination: {
     type: String,
   },
 });
 
-module.exports = mongoose.model("LocationDelivery", locationSchema);
+module.exports = mongoose.model("LocationPullOut", locationSchema);

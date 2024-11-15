@@ -1,6 +1,7 @@
 const TripDelivery = require("../../models/depot/delivery/trip-delivery");
 const Location = require("../../models/depot/delivery/location");
 const Diesel = require("../../models/depot/delivery/diesel");
+const { ObjectId } = require('mongodb');
 
 exports.createApkTripDelivery = (req, res, next) => {
   let odometer_image_path;
@@ -26,6 +27,7 @@ exports.createApkTripDelivery = (req, res, next) => {
     companion,
     points,
     temperature,
+    route, // new field
     crates_transaction,
   } = req.body;
 
@@ -45,6 +47,7 @@ exports.createApkTripDelivery = (req, res, next) => {
     companion: (companion && JSON.parse(companion)) || [],
     points: (points && JSON.parse(points)) || [],
     temperature,
+    route, // new field
     crates_transaction:
       (crates_transaction && JSON.parse(crates_transaction)) || [],
   };
@@ -265,7 +268,6 @@ TripDelivery.find(filter)
               el.toString().toLowerCase().includes(searchItem)
             );
           }
-
           if (!obj) return false;
         }
 
@@ -293,193 +295,354 @@ TripDelivery.find(filter)
 };
 
 // new get delivery trips
+// exports.fetchTripDelivery = async (req, res, next) => {
+//   const { page, limit } = req?.query;
+
+//   try {
+//     let pageNumber = parseInt(page) || 1;
+//     let itemsPerPage = parseInt(limit) || 0;
+
+//     const skipValue = (pageNumber - 1) * itemsPerPage;
+//     let searchItem = req.query.search || "";
+//     const searchBy = req.query.searchBy || "_id";
+//     const userDepartment = req?.department;
+//     const show_all_departments = req?.show_all_departments;
+//     const dateFrom = req.query.dateFrom;
+//     const dateTo = req.query.dateTo;
+//     const typesOfTrip = req.query.typesOfTrip;
+
+//     let filter, totalItems;
+
+//     //new update (2024-02-16)
+//     //added a filter on trip_date and sync date
+//     if (typesOfTrip === "early_trips" && (searchBy === "trip_date" || searchBy === "createdAt")) {
+//       const dateFilter = {
+//         [searchBy]: {
+//             $gte: new Date(`${dateFrom}T00:00:00`),
+//             $lte: new Date(`${dateTo}T23:59:59`)
+//         }
+        
+//     };
+//       const timeFilter = {
+//           $expr: {
+//               $and: [
+//                   { $gte: [{ $hour: '$trip_date' }, 14] }, // 2 pm
+//                   { $lt: [{ $hour: '$trip_date' }, 16] }   // 4 pm
+//               ]
+//           }
+//       };
+//       filter = {
+//           $and: [dateFilter, timeFilter]
+//       };
+//     } else if (typesOfTrip === "regular_trips" && (searchBy === "trip_date" || searchBy === "createdAt")) {
+          
+//           const dateFilter = {
+//             [searchBy]: {
+//                 $gte: new Date(`${dateFrom}T00:00:00`),
+//                 $lte: new Date(`${dateTo}T23:59:59`)
+//             }
+            
+//         };
+
+//         const timeFilter = {
+//           $or: [
+//               {
+//                   $and: [
+//                       { $expr: { $gte: [{ $hour: `$trip_date` }, 17] } }, // 1am  
+//                       { $expr: { $lt: [{ $hour: `$trip_date` }, 24] } }  //8am
+//                   ]
+//               },
+//               {
+//                   $and: [
+//                       { $expr: { $gte: [{ $hour: `$trip_date` }, 0] } }, // 8am 
+//                       { $expr: { $lt: [{ $hour: `$trip_date` }, 14] } }  //10pm
+//                   ]
+//               }
+//           ]
+//       };
+      
+    
+//         filter = {
+//             $and: [dateFilter, timeFilter]
+//         };
+//       }
+//       else if (typesOfTrip === "early_trips") {
+//         filter = {
+//           $expr: {
+//             $and: [
+//               { $gte: [{ $hour: '$trip_date' }, 14] }, // 10 pm
+//               { $lt: [{ $hour: '$trip_date' }, 16] }  // 12 am
+//             ]
+//           }
+//         };
+//       } else if (typesOfTrip === "regular_trips") {
+//         filter = {
+//           $expr: {
+//             $or: [
+//               {
+//                 $and: [
+//                   { $gte: [{ $hour: '$trip_date' }, 17] }, // 1am
+//                   { $lt: [{ $hour: '$trip_date' }, 24] } // 8am
+//                 ]
+//               },
+//               {
+//                 $and: [
+//                   { $gte: [{ $hour: '$trip_date' }, 0] }, // 8am
+//                   { $lt: [{ $hour: '$trip_date' }, 14] } // 10pm
+//                 ]
+//               }
+//             ]
+//           }
+//         };
+//       }
+//       else {
+//         filter =
+//         searchBy === "trip_date" || searchBy === "createdAt"
+//         ? {
+//             [searchBy]: {
+//               $gte: `${dateFrom}T00:00:00`,
+//               $lte: `${dateTo}T23:59:59`,
+//             },
+//           }
+//         : {};
+//       }
+    
+//       // added additional on this field added service_trips
+//     if (searchBy === "trip_date" || typesOfTrip === "early_trips" || typesOfTrip === "regular_trips" || typesOfTrip === "special_trips" || typesOfTrip === "service_trips"  || searchBy === "createdAt") {
+//       sort = { trip_date: "asc" };
+//     }else{
+//       sort = { createdAt: "desc" };
+//     }
+    
+//     const all_trips = await TripDelivery.find(filter)
+//       .populate({
+//         path: "locations",
+//         options: { sort: { date: 1 } },
+//       })
+//       .populate("diesels")
+//       .populate("user_id", {
+//         employee_id: 1,
+//         first_name: 2,
+//         last_name: 3,
+//         department: 4,
+//       })
+//       .populate("vehicle_id", { plate_no: 1 })
+//       .sort(sort)
+//       .skip(skipValue)
+//       .limit(itemsPerPage);
+
+//     // Apply additional filtering based on searchBy and searchItem
+//     const filteredTrips = all_trips.filter((trip) => {
+//       searchItem = searchItem.toLowerCase();
+//       const searchProps = searchBy.split(".");
+//       let obj = trip;
+//       for (const prop of searchProps) {
+//         obj = obj[prop];
+//         if (Array.isArray(obj)) {
+//           if (prop === "companion") {
+//             return obj.find((el) =>
+//               el.first_name
+//                 .toString()
+//                 .toLowerCase()
+//                 .includes(searchItem)
+//             );
+//           }
+//           return obj.find(
+//             (el) =>
+//               el && el.toString().toLowerCase().includes(searchItem)
+//           );
+//         }
+//         if (!obj) return false;
+//       }
+//       return obj.toString().toLowerCase().includes(searchItem);
+//     });
+
+//     if (searchItem != null && searchItem !== "") {
+//       totalItems = filteredTrips.length;
+//     } else {
+//       totalItems = await TripDelivery.countDocuments(filter);
+//     }
+
+
+//     const result = {
+//       message: "Success get delivery trips",
+//       data: filteredTrips,
+//       pagination:{
+//         totalItems: totalItems,
+//         limit: itemsPerPage,
+//         currentPage: pageNumber,
+//       },
+//       previous_page:
+//         pageNumber > 1 && filteredTrips?.length ? pageNumber - 1 : null,
+//       next_page:
+//         itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
+//     };
+
+//     res.status(200).json(result);
+//     return next();
+//   } catch (error) {
+//     res.status(500).json({ error: "Internal Server Error" });
+//     return next(error);
+//   }
+// };
+
+// new get trips with aggregate and pipeline 
 exports.fetchTripDelivery = async (req, res, next) => {
-  const { page, limit } = req?.query;
+  const { page, limit, search = "", searchBy = "_id", typesOfTrip } = req.query;
+
+  let { dateFrom, dateTo } = req.query;
 
   try {
     let pageNumber = parseInt(page) || 1;
-    let itemsPerPage = parseInt(limit) || 10;
-
-    // If page or limit is undefined, remove pagination
-    if (isNaN(pageNumber) || isNaN(itemsPerPage)) {
-      pageNumber = 1;
-      itemsPerPage = 0; // Set to 0 to retrieve all data
-    }
-
+    let itemsPerPage = parseInt(limit) || 0; // Set to 0 for no limit
     const skipValue = (pageNumber - 1) * itemsPerPage;
-    let searchItem = req.query.search || "";
-    const searchBy = req.query.searchBy || "_id";
-    const userDepartment = req?.department;
-    const show_all_departments = req?.show_all_departments;
-    const dateFrom = req.query.dateFrom;
-    const dateTo = req.query.dateTo;
-    const typesOfTrip = req.query.typesOfTrip;
 
-    let filter, totalItems;
+    const pipeline = [];
+    let filter = {};
 
-    //new update (2024-02-16)
-    //added a filter on trip_date and sync date
-    if (typesOfTrip === "early_trips" && (searchBy === "trip_date" || searchBy === "createdAt")) {
-      const dateFilter = {
-        [searchBy]: {
-            $gte: new Date(`${dateFrom}T00:00:00`),
-            $lte: new Date(`${dateTo}T23:59:59`)
+    // Lookup related documents
+    pipeline.push(
+      {
+        $lookup: {
+          from: "locationdeliveries",
+          localField: "locations",
+          foreignField: "_id",
+          as: "locations",
         }
-        
-    };
-      const timeFilter = {
-          $expr: {
-              $and: [
-                  { $gte: [{ $hour: '$trip_date' }, 14] }, // 2 pm
-                  { $lt: [{ $hour: '$trip_date' }, 16] }   // 4 pm
-              ]
-          }
-      };
-      filter = {
-          $and: [dateFilter, timeFilter]
-      };
-    } else if (typesOfTrip === "regular_trips" && (searchBy === "trip_date" || searchBy === "createdAt")) {
-          
-          const dateFilter = {
-            [searchBy]: {
-                $gte: new Date(`${dateFrom}T00:00:00`),
-                $lte: new Date(`${dateTo}T23:59:59`)
-            }
-            
-        };
-
-        const timeFilter = {
-          $or: [
-              {
-                  $and: [
-                      { $expr: { $gte: [{ $hour: `$trip_date` }, 17] } }, // 1am  
-                      { $expr: { $lt: [{ $hour: `$trip_date` }, 24] } }  //8am
-                  ]
-              },
-              {
-                  $and: [
-                      { $expr: { $gte: [{ $hour: `$trip_date` }, 0] } }, // 8am 
-                      { $expr: { $lt: [{ $hour: `$trip_date` }, 14] } }  //10pm
-                  ]
-              }
+      },
+      {
+        $lookup: {
+          from: "dieseldeliveries",
+          localField: "diesels",
+          foreignField: "_id",
+          as: "diesels",
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user_id",
+          pipeline: [
+            { $project: { employee_id: 1, first_name: 1, last_name: 1, department: 1 } }
           ]
-      };
-      
-    
-        filter = {
-            $and: [dateFilter, timeFilter]
-        };
-      }
-      else if (typesOfTrip === "early_trips") {
-        filter = {
-          $expr: {
-            $and: [
-              { $gte: [{ $hour: '$trip_date' }, 14] }, // 10 pm
-              { $lt: [{ $hour: '$trip_date' }, 16] }  // 12 am
-            ]
-          }
-        };
-      } else if (typesOfTrip === "regular_trips") {
-        filter = {
-          $expr: {
-            $or: [
-              {
-                $and: [
-                  { $gte: [{ $hour: '$trip_date' }, 17] }, // 1am
-                  { $lt: [{ $hour: '$trip_date' }, 24] } // 8am
-                ]
-              },
-              {
-                $and: [
-                  { $gte: [{ $hour: '$trip_date' }, 0] }, // 8am
-                  { $lt: [{ $hour: '$trip_date' }, 14] } // 10pm
-                ]
-              }
-            ]
-          }
-        };
-      }
-      else {
-        filter =
-        searchBy === "trip_date" || searchBy === "createdAt"
-        ? {
-            [searchBy]: {
-              $gte: `${dateFrom}T00:00:00`,
-              $lte: `${dateTo}T23:59:59`,
-            },
-          }
-        : {};
-      }
-    
-      // added additional on this field added service_trips
-    if (searchBy === "trip_date" || typesOfTrip === "early_trips" || typesOfTrip === "regular_trips" || typesOfTrip === "special_trips" || typesOfTrip === "service_trips"  || searchBy === "createdAt") {
-      sort = { trip_date: "asc" };
-    }else{
-      sort = { createdAt: "desc" };
-    }
-    
-    const all_trips = await TripDelivery.find(filter)
-      .populate({
-        path: "locations",
-        options: { sort: { date: 1 } },
-      })
-      .populate("diesels")
-      .populate("user_id", {
-        employee_id: 1,
-        first_name: 2,
-        last_name: 3,
-        department: 4,
-      })
-      .populate("vehicle_id", { plate_no: 1 })
-      .sort(sort)
-      .skip(skipValue)
-      .limit(itemsPerPage);
-
-    // Apply additional filtering based on searchBy and searchItem
-    const filteredTrips = all_trips.filter((trip) => {
-      searchItem = searchItem.toLowerCase();
-      const searchProps = searchBy.split(".");
-      let obj = trip;
-      for (const prop of searchProps) {
-        obj = obj[prop];
-        if (Array.isArray(obj)) {
-          if (prop === "companion") {
-            return obj.find((el) =>
-              el.first_name
-                .toString()
-                .toLowerCase()
-                .includes(searchItem)
-            );
-          }
-          return obj.find(
-            (el) =>
-              el && el.toString().toLowerCase().includes(searchItem)
-          );
         }
-        if (!obj) return false;
+      },
+      {
+        $unwind: { path: "$user_id", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $lookup: {
+          from: "vehicles",
+          localField: "vehicle_id",
+          foreignField: "_id",
+          as: "vehicle_id",
+        }
+      },
+      {
+        $unwind: { path: "$vehicle_id", preserveNullAndEmptyArrays: true }
       }
-      return obj.toString().toLowerCase().includes(searchItem);
-    });
+    );
 
-    if (searchItem != null && searchItem !== "") {
-      totalItems = filteredTrips.length;
-    } else {
-      totalItems = await TripDelivery.countDocuments(filter);
+    // Add date filters if applicable
+    if (dateFrom && dateTo) {
+      dateFrom = new Date(`${dateFrom}T00:00:00Z`);
+      dateTo = new Date(`${dateTo}T23:59:59Z`);
+      
+      if (searchBy === "trip_date" || searchBy === "createdAt") {
+        filter[searchBy] = { $gte: dateFrom, $lte: dateTo };
+      }
     }
 
+    // Filter based on typesOfTrip (early_trips, regular_trips, etc.)
+    if (typesOfTrip === "early_trips") {
+      filter = {
+        ...filter,
+        $expr: {
+          $and: [
+            { $gte: [{ $hour: "$trip_date" }, 14] }, // 2 pm
+            { $lt: [{ $hour: "$trip_date" }, 16] }   // 4 pm
+          ]
+        }
+      };
+    } else if (typesOfTrip === "regular_trips") {
+      filter = {
+        ...filter,
+        $expr: {
+          $or: [
+            {
+              $and: [
+                { $gte: [{ $hour: "$trip_date" }, 17] }, // 5 pm
+                { $lt: [{ $hour: "$trip_date" }, 24] }   // midnight
+              ]
+            },
+            {
+              $and: [
+                { $gte: [{ $hour: "$trip_date" }, 0] },  // midnight
+                { $lt: [{ $hour: "$trip_date" }, 14] }   // 10 pm
+              ]
+            }
+          ]
+        }
+      };
+    }
 
+    // Constructing filter based on search criteria
+    if (search) {
+      const searchTerm = search.trim(); // Case-insensitive regex
+      const isNumericSearch = !isNaN(searchTerm);
+
+      if (searchBy === "user_id.employee_id" || searchBy === "user_id.department") {
+        filter[`user_id.${searchBy.split('.').pop()}`] = { $regex: searchTerm, $options: 'i' };
+      } else if (searchBy === "vehicle_id.plate_no") {
+        filter["vehicle_id.plate_no"] = { $regex: searchTerm, $options: 'i' };
+      } else if (isNumericSearch && ["odometer", "odometer_done"].includes(searchBy)) {
+        filter[searchBy] = parseInt(searchTerm, 10);
+      } else {
+        filter[searchBy] = { $regex: searchTerm, $options: 'i' };
+      }
+    }
+
+    // Add the $match stage now that all lookups and filters are set up
+    if (Object.keys(filter).length > 0) {
+      pipeline.push({ $match: filter });
+    }
+
+    // Sorting logic
+    let sort = { createdAt: -1 }; // Default sort by createdAt descending
+    if (searchBy === "trip_date") {
+      sort = { trip_date: 1 }; // Ascending by trip_date
+    }
+    pipeline.push({ $sort: sort });
+
+    // Count the total number of matching documents
+    const totalCountPipeline = [...pipeline];
+    const totalCountResult = await TripDelivery.aggregate([
+      ...totalCountPipeline,
+      { $count: "totalItems" }
+    ]);
+    const totalItems = totalCountResult.length > 0 ? totalCountResult[0].totalItems : 0;
+
+    // Pagination
+    if (itemsPerPage > 0) {
+      pipeline.push({ $skip: skipValue }, { $limit: itemsPerPage });
+    }
+
+    // Execute the aggregation
+    const all_trips = await TripDelivery.aggregate(pipeline);
+
+    // Prepare response
     const result = {
       message: "Success get delivery trips",
-      data: filteredTrips,
-      pagination:{
-        totalItems: totalItems,
+      data: all_trips,
+      pagination: {
+        totalItems,
         limit: itemsPerPage,
         currentPage: pageNumber,
       },
-      previous_page:
-        pageNumber > 1 && filteredTrips?.length ? pageNumber - 1 : null,
-      next_page:
-        itemsPerPage < totalItems && filteredTrips?.length ? pageNumber + 1 : null,
+      previous_page: pageNumber > 1 ? pageNumber - 1 : null,
+      next_page: itemsPerPage < totalItems ? pageNumber + 1 : null,
     };
 
     res.status(200).json(result);
@@ -489,6 +652,8 @@ exports.fetchTripDelivery = async (req, res, next) => {
     return next(error);
   }
 };
+
+
 
 exports.updateTripDelivery = (req, res, next) => {
   const tripId = req.params.tripId;

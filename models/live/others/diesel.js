@@ -10,11 +10,15 @@ const dieselSchema = new Schema({
   },
   gas_station_name: {
     type: String,
-    required: true,
+    // required: true,
+  },
+  maintenance_remarks: {
+    type: String,
+    // required: true,
   },
   trip_id: {
     type: Schema.Types.ObjectId,
-    ref: "TripOffice",
+    ref: "TripOthers",
     required: true,
   },
   odometer: {
@@ -23,11 +27,11 @@ const dieselSchema = new Schema({
   },
   liter: {
     type: Number,
-    required: true,
+    // required: true,
   },
   lat: {
     type: Number,
-    require: true,
+    required: true,
   },
   long: {
     type: Number,
@@ -40,8 +44,7 @@ const dieselSchema = new Schema({
   //add this for enhancement
   po_number: {
     type: Number,
-    // required: true,
   },
 });
 
-module.exports = mongoose.model("DieselOffice", dieselSchema);
+module.exports = mongoose.model("DieselOthers", dieselSchema);

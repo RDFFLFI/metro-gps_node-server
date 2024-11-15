@@ -10,7 +10,11 @@ const dieselSchema = new Schema({
   },
   gas_station_name: {
     type: String,
-    required: true,
+    // required: true,
+  },
+  maintenance_remarks: {
+    type: String,
+    // required: true,
   },
   trip_id: {
     type: Schema.Types.ObjectId,
@@ -23,7 +27,7 @@ const dieselSchema = new Schema({
   },
   liter: {
     type: Number,
-    required: true,
+    // required: true,
   },
   lat: {
     type: Number,
@@ -36,6 +40,11 @@ const dieselSchema = new Schema({
   amount: {
     type: Number,
     required: true,
+  },
+  //add this for enhancement
+  po_number: {
+    type: Number,
+    // required: true,
   },
 });
 
